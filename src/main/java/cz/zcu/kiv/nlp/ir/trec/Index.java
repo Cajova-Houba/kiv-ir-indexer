@@ -133,7 +133,7 @@ public class Index implements Indexer, Searcher {
         for(int i = 0; i < topResultCount; i++) {
             ResultImpl res = (ResultImpl)resultQueue.poll();
             res.setRank(10 - i);
-            results.add(resultQueue.poll());
+            results.add(res);
         }
         return results;
     }

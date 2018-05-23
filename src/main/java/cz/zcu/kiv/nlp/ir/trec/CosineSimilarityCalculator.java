@@ -43,7 +43,11 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
         }
 
         // cos normalization for document weights
-        cosNormConstant = 1/Math.sqrt(cosNormConstant);
+        if (cosNormConstant == 0) {
+            cosNormConstant = 1;
+        } else {
+            cosNormConstant = 1/Math.sqrt(cosNormConstant);
+        }
 
         for(String token : queryTermF.keySet()) {
             // weighted query term frequency
