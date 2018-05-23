@@ -1,4 +1,4 @@
-package cz.zcu.kiv.nlp.ir.trec;
+package cz.zcu.kiv.nlp.ir.trec.core;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,9 +16,15 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
      */
     private int documentCount;
 
+    private InvertedIndex iinvertedIndex;
+
     public CosineSimilarityCalculator(Map<String, Map<String, Integer>> invertedIndex, int documentCount) {
         this.invertedIndex = invertedIndex;
         this.documentCount = documentCount;
+    }
+
+    public CosineSimilarityCalculator(InvertedIndex iinvertedIndex) {
+        this.iinvertedIndex = iinvertedIndex;
     }
 
     public double calculateScore(String[] query, String documentId) {
@@ -64,11 +70,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public int df(String term) {
-        if (!invertedIndex.containsKey(term)) {
-            return 0;
-        }
-
-        return invertedIndex.get(term).size();
+        return iinvertedIndex.documentFrequency(term);
     }
 
     public double idf(String term) {
@@ -81,10 +83,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public double ntf(String term, String documentId) {
-        if (!invertedIndex.containsKey(term) || !invertedIndex.get(term).containsKey(documentId)) {
-            return 0;
-        }
-        return invertedIndex.get(term).get(documentId);
+        return iinvertedIndex.getTermFrequency(term, documentId);
     }
 
     public double ltf(String term, String documentId){
@@ -97,6 +96,6 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public int getDocumentCount() {
-        return documentCount;
+        return iinvertedIndex.getDocumentCount();
     }
 }

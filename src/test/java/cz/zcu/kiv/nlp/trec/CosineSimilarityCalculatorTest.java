@@ -1,18 +1,16 @@
 package cz.zcu.kiv.nlp.trec;
 
-import cz.zcu.kiv.nlp.ir.trec.CosineSimilarityCalculator;
-import cz.zcu.kiv.nlp.ir.trec.SimilarityCalculator;
+import cz.zcu.kiv.nlp.ir.trec.core.CosineSimilarityCalculator;
+import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
+import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculator;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public class CosineSimilarityCalculatorTest {
 
-    protected Map<String, Map<String, Integer>> invertedIndex;
+    protected InvertedIndex invertedIndex;
     protected int documentCount;
     protected String[] tokenizedQuery;
     protected SimilarityCalculator similarityCalculator;
@@ -20,7 +18,7 @@ public class CosineSimilarityCalculatorTest {
 
     @Before
     public void setUp() {
-        invertedIndex = new HashMap<String, Map<String, Integer>>();
+        invertedIndex = new InvertedIndex();
 
         // query
         String query = "best car insurance";
@@ -31,44 +29,14 @@ public class CosineSimilarityCalculatorTest {
         // document 2: worst car auto insurance
         // document 3: completely irrelevant
         // => terms auto, car, completely, insurance, irrelevant, worst
-
-        // auto
-        Map<String, Integer> termPostings = new HashMap<String, Integer>();
-        termPostings.put("d1",1);
-        termPostings.put("d2",1);
-        invertedIndex.put("auto", termPostings);
-
-        // car
-        termPostings = new HashMap<String, Integer>();
-        termPostings.put("d1",1);
-        termPostings.put("d2",1);
-        invertedIndex.put("car", termPostings);
-
-        // completely
-        termPostings = new HashMap<String, Integer>();
-        termPostings.put("d3",1);
-        invertedIndex.put("completely", termPostings);
-
-        // insurance
-        termPostings = new HashMap<String, Integer>();
-        termPostings.put("d1",2);
-        termPostings.put("d2",1);
-        invertedIndex.put("insurance", termPostings);
-
-        // irrelevant
-        termPostings = new HashMap<String, Integer>();
-        termPostings.put("d3",1);
-        invertedIndex.put("irrelevant", termPostings);
-
-        // worst
-        termPostings = new HashMap<String, Integer>();
-        termPostings.put("d2",1);
-        invertedIndex.put("worst", termPostings);
+        invertedIndex.indexDocument(new String[] {"car","insurance","auto","insurance"},"d1");
+        invertedIndex.indexDocument(new String[] {"worst","car","auto","insurance"},"d2");
+        invertedIndex.indexDocument(new String[] {"completely","irrelevant"},"d3");
 
         documentCount = 3;
 
         // calculator
-        similarityCalculator = new CosineSimilarityCalculator(invertedIndex, documentCount);
+        similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
     }
 
     @Test

@@ -1,4 +1,4 @@
-package cz.zcu.kiv.nlp.ir.trec;
+package cz.zcu.kiv.nlp.ir.trec.core;
 
 /**
  * Base interface for similarity calculators.
