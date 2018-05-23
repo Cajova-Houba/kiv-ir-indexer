@@ -14,6 +14,8 @@ import java.util.*;
 
 public class Index implements Indexer, Searcher {
 
+    public static final int DEF_TOP_RESULT_COUNT = 10;
+
     /**
      * Inverted index which maps words to its occurrences in documents.
      * word -> (doc1Id -> # of occurrences, doc2Id -> # of occurrences, ...).
@@ -25,6 +27,11 @@ public class Index implements Indexer, Searcher {
      */
     // maybe not needed
     private Map<String, Document> documentMap;
+
+    /**
+     * Ids of indexed documents.
+     */
+    private Set<String> documentIds;
 
     /**
      * Number of document indexes.
@@ -46,12 +53,19 @@ public class Index implements Indexer, Searcher {
      */
     private Set<String> stopwords;
 
+    /**
+     * Max number of results with top score returned by search.
+     */
+    private int topResultCount;
+
     public Index(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords) {
         this.tokenizer = tokenizer;
         this.stemmer = stemmer;
         this.stopwords = stopwords;
         invertedIndex = new HashMap<String, Map<String, Integer>>();
         documentMap = new HashMap<String, Document>();
+        documentIds = new HashSet<String>();
+        topResultCount = DEF_TOP_RESULT_COUNT;
     }
 
     public void index(List<Document> documents) {
@@ -59,9 +73,10 @@ public class Index implements Indexer, Searcher {
         for(Document d : documents) {
             String dId = d.getId();
             String dText = d.getText();
+            documentIds.add(dId);
 
             // tokenize text and index document
-            List<String> tokens = tokenizer.tokenize(dText);
+            String[] tokens = tokenizer.tokenize(dText);
             for(String token : tokens) {
                 // skip stopwords
                 if (isStopword(token)) {
@@ -88,23 +103,37 @@ public class Index implements Indexer, Searcher {
     }
 
     public List<Result> search(String query) {
-        //  todo implement
-        // tokenize query
-        List<String> tokenizedQuery = tokenizer.tokenize(query);
+        // tokenize query and stem
+        String[] tokenizedQuery = tokenizer.tokenize(query);
+        for(int i = 0; i < tokenizedQuery.length; i++) {
+            tokenizedQuery[i] = stemmer.stem(tokenizedQuery[i]);
+        }
 
-        // find matches in inverted index
+        // prepare priority queue for results
         List<Result> results = new ArrayList<Result>();
-        for(String token : tokenizedQuery) {
-            String stemToken = stemmer.stem(token);
-            if (invertedIndex.containsKey(stemToken)) {
-                for (String dId : invertedIndex.get(stemToken).keySet()) {
-                    ResultImpl r = new ResultImpl();
-                    r.setDocumentID(dId);
-                    r.setRank(1);
-                    r.setScore((float)tfIdf(stemToken, dId));
-                    results.add(r);
-                }
+        PriorityQueue<Result> resultQueue = new PriorityQueue<Result>(documentCount, new Comparator<Result>() {
+            public int compare(Result o1, Result o2) {
+                if (o1.getScore() > o2.getScore()) return -1;
+                if (o1.getScore() == o2.getScore()) return 0;
+                return 1;
             }
+        }) ;
+
+        // compute query-document similarity for each document
+        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex, documentCount);
+        for(String documentId : documentIds) {
+            double score = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+            ResultImpl r = new ResultImpl();
+            r.setDocumentID(documentId);
+            r.setScore((float)score);
+            resultQueue.add(r);
+        }
+
+        // select top K results
+        for(int i = 0; i < topResultCount; i++) {
+            ResultImpl res = (ResultImpl)resultQueue.poll();
+            res.setRank(10 - i);
+            results.add(resultQueue.poll());
         }
         return results;
     }
@@ -120,84 +149,5 @@ public class Index implements Indexer, Searcher {
         }
 
         return stopwords.contains(token);
-    }
-
-    /**
-     * Calculates the cosine similarity between query and document.
-     *
-     * @param queryTfIdf Array which contains td-idf values calculated for document and each term in query.
-     * @param documentId Id of document.
-     * @return Cosine similarity.
-     */
-    private double cosineSimilarity(double[] queryTfIdf, String documentId) {
-        return 0.0;
-    }
-
-    /**
-     * Calculates TF-IDF rank for one term and one document.
-     *
-     * @param term Term (part of a query).
-     * @param documentId Id of a document.
-     * @return Calculated TF-IDF.
-     */
-    private double tfIdf(String term, String documentId) {
-        if (!invertedIndex.containsKey(term)) {
-            return 0;
-        }
-        double tf = 1 + Math.log(invertedIndex.get(term).get(documentId));
-        double idf = Math.log(documentCount / invertedIndex.get(term).size());
-        return tf*idf;
-    }
-
-    /**
-     * One item in inverted index postings. Contains document id and number of term occurances.
-     */
-    private class IndexItem {
-
-        private String documentId;
-        private int termOccurrence;
-
-        public IndexItem(String documentId) {
-            this.documentId = documentId;
-            termOccurrence = 1;
-        }
-
-        /**
-         * Increments termOccurrence by 1.
-         */
-        public void increaseOccurance() {
-            termOccurrence++;
-        }
-
-        public String getDocumentId() {
-            return documentId;
-        }
-
-        public void setDocumentId(String documentId) {
-            this.documentId = documentId;
-        }
-
-        public int getTermOccurances() {
-            return termOccurrence;
-        }
-
-        public void setTermOccurances(int termOccurrence) {
-            this.termOccurrence = termOccurrence;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            IndexItem indexItem = (IndexItem) o;
-
-            return documentId != null ? documentId.equals(indexItem.documentId) : indexItem.documentId == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return documentId != null ? documentId.hashCode() : 0;
-        }
     }
 }

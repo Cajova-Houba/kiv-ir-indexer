@@ -16,7 +16,7 @@ public class AdvancedTokenizer implements Tokenizer {
     public static final String withoutDiacritics = "aAcCdDeEeEiInNoOrRsStTuUuUyYzZCc";
 
 
-    public List<String> tokenize(String text) {
+    public String[] tokenize(String text) {
         // lower case, remove accents
         text = text.toLowerCase();
         text = removeAccents(text);
@@ -33,7 +33,7 @@ public class AdvancedTokenizer implements Tokenizer {
             words.add(token);
         }
 
-        return words;
+        return words.toArray(new String[0]);
     }
 
     private String removeAccents(String text) {
