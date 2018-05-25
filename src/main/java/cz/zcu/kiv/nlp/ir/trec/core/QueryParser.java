@@ -1,6 +1,6 @@
 package cz.zcu.kiv.nlp.ir.trec.core;
 
-import org.apache.lucene.analysis.Analyzer;
+import cz.zcu.kiv.nlp.ir.trec.preprocess.Preprocessor;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.precedence.PrecedenceQueryParser;
 import org.apache.lucene.search.BooleanClause;
@@ -18,8 +18,14 @@ public class QueryParser {
      */
     private PrecedenceQueryParser parser;
 
-    public QueryParser(Analyzer analyzer) {
-        this.parser = new PrecedenceQueryParser(analyzer);
+    /**
+     * My cool preprocessor. Way better than the lucene's one.
+     */
+    private Preprocessor preprocessor;
+
+    public QueryParser(Preprocessor preprocessor) {
+        this.preprocessor = preprocessor;
+        this.parser = new PrecedenceQueryParser();
     }
 
     /**
@@ -33,7 +39,7 @@ public class QueryParser {
             SearchQueryNode root = new SearchQueryNode();
             if (q.getClass() == TermQuery.class) {
                 root.setTerm(true);
-                root.setText(((TermQuery)q).getTerm().text());
+                root.setText(preprocessor.processTerm(((TermQuery)q).getTerm().text()));
             } else if (q.getClass() == BooleanQuery.class) {
                 createQueryTree(q, root);
             } else {
@@ -56,15 +62,16 @@ public class QueryParser {
 
         for(BooleanClause clause : booleanQuery.clauses()) {
             SearchQueryNode child = new SearchQueryNode();
-            child.setText(clause.getQuery().toString());
             root.addChild(clause.getOccur(), child);
 
             // if boolean => continue creating the tree
             if(clause.getQuery().getClass() == BooleanQuery.class) {
+                child.setText(clause.getQuery().toString());
                 createQueryTree(clause.getQuery(), child);
 
             // if term => end recursion here
             } else if(clause.getQuery().getClass() == TermQuery.class){
+                child.setText(preprocessor.processTerm(clause.getQuery().toString()));
                 child.setTerm(true);
             }
         }

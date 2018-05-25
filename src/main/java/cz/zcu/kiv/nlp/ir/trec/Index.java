@@ -7,7 +7,6 @@ import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Preprocessor;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Stemmer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Tokenizer;
-import org.apache.lucene.analysis.cz.CzechAnalyzer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +64,9 @@ public class Index implements Indexer, Searcher {
 
         // get list of postings to search
         List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
+        if(postings.isEmpty()) {
+            return new ArrayList<>();
+        }
 
         // get list of terms in query
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
@@ -104,7 +106,7 @@ public class Index implements Indexer, Searcher {
 
     @Override
     public List<Result> search(String query) {
-        SearchQueryNode rootQuery = new QueryParser(new CzechAnalyzer()).parseQuery(query);
+        SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
 
         return getResultsForQuery(rootQuery);
     }

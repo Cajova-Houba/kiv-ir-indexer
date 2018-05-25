@@ -3,7 +3,7 @@ package cz.zcu.kiv.nlp.ir.trec.core;
 import org.apache.lucene.search.BooleanClause;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +15,7 @@ public class SearchQueryNode {
     /**
      * Child nodes mapped to possible boolean operators.
      */
-    private Map<BooleanClause.Occur, Collection<SearchQueryNode>> children;
+    private Map<BooleanClause.Occur, List<SearchQueryNode>> children;
 
     /**
      * Text of this node.
@@ -27,7 +27,14 @@ public class SearchQueryNode {
      */
     private boolean isTerm;
 
+    public SearchQueryNode() {
+        children = new HashMap<>();
+    }
+
     public void addChild(BooleanClause.Occur occur, SearchQueryNode child) {
+        if (!children.containsKey(occur)) {
+            children.put(occur, new ArrayList<>());
+        }
         this.children.get(occur).add(child);
     }
 
@@ -47,7 +54,7 @@ public class SearchQueryNode {
         isTerm = term;
     }
 
-    public Map<BooleanClause.Occur, Collection<SearchQueryNode>> getChildren() {
+    public Map<BooleanClause.Occur, List<SearchQueryNode>> getChildren() {
         return children;
     }
 
@@ -69,7 +76,7 @@ public class SearchQueryNode {
         if(isTerm) {
             terms.add(this.text);
         } else {
-            for(Map.Entry<BooleanClause.Occur, Collection<SearchQueryNode>> childOccurrence : this.children.entrySet()) {
+            for(Map.Entry<BooleanClause.Occur, List<SearchQueryNode>> childOccurrence : this.children.entrySet()) {
                 for(SearchQueryNode child : childOccurrence.getValue()) {
                     child.getTermsRec(terms);
                 }

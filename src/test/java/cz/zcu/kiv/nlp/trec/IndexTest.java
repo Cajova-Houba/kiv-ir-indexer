@@ -13,8 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test cases for indexer.
@@ -32,9 +31,9 @@ public class IndexTest {
         index = new Index(new AdvancedTokenizer(), new CzechStemmerAgressive(), new HashSet<>());
 
         List<Document> documents = Arrays.asList(
-                new DocumentNew("car insurance auto insurance",DOC_1_ID),
-                new DocumentNew("worst car auto insurance",DOC_2_ID),
-                new DocumentNew("completely irrelevant",DOC_3_ID)
+                new DocumentNew("pojisteni auto vozidla",DOC_1_ID),
+                new DocumentNew("nejhorsi pojisteni na auta",DOC_2_ID),
+                new DocumentNew("uplne irelevantni dokument",DOC_3_ID)
         );
 
         index.index(documents);
@@ -46,13 +45,118 @@ public class IndexTest {
      */
     @Test
     public void testSimpleSearch() {
-        String query = "car";
+        String query = "auto";
         int expResCount = 2;
 
         List<Result> results = index.search(query);
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    /**
+     * Simple AND query.
+     */
+    @Test
+    public void testSimpleAndSearch() {
+        String query = "auto AND pojisteni";
+        int expResCount = 2;
+
+        List<Result> results = index.search(query);
+        assertEquals("wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    /**
+     * Simple OR query.
+     */
+    @Test
+    public void testSimpleOrSearch() {
+        String query1 = "auto nejhorsi";
+        String query2 = "auto OR nejhorsi";
+        int expResCount = 2;
+
+        List<Result> results = index.search(query1);
+        assertEquals("wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+
+        results = index.search(query2);
+        assertEquals("wrong number of results returned for query 2!", expResCount, results.size() );
+        assertTrue("First document not returned for query 2!", checkResultsContainDocument(results, DOC_1_ID));
+        assertTrue("Second document not returned for query 2!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    /**
+     * Test simple NOT.
+     */
+    @Test
+    public void testSimpleNotSearch() {
+        String query = "NOT auto";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    @Test
+    public void testNotSearch1() {
+        String query = "NOT auto NOT pojisteni";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    @Test
+    public void testNotSearch2() {
+        String query = "NOT auto NOT pojisteni NOT uplne";
+        int expResCount = 0;
+
+        List<Result> results = index.search(query);
+        assertEquals("wrong number of results returned!", expResCount, results.size() );
+        checkResultsScoreNotNan(results);
+    }
+
+    @Test
+    public void testComplexSearch1() {
+        String query = "(NOT vozidlo) AND (NOT irelevantni)";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    @Test
+    public void testComplexSearch2() {
+        String query = "((NOT vozidlo) AND (NOT irelevantni) OR  (pojisteni AND nejhorsi))";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNan(results);
+    }
+
+    /**
+     * Checks that result scores are not NaN.
+     * @param results
+     */
+    private void checkResultsScoreNotNan(List<Result> results) {
+        for(Result r : results) {
+            assertFalse("Resutl "+r+" has NaN score!", Double.isNaN(r.getScore()));
+        }
     }
 
     /**

@@ -20,9 +20,19 @@ public class InvertedIndex {
      */
     private Set<String> indexedDocuments;
 
+    /**
+     * Comparator which compares postings by document id hash.
+     */
+    private Comparator<Posting> postingComparator;
+
     public InvertedIndex() {
         invertedIndex = new HashMap<String, Map<String,Posting>>();
         indexedDocuments = new HashSet<String>();
+        postingComparator = (o1, o2) -> {
+            if (o1.documentIdHash() > o2.documentIdHash()) return 1;
+            if (o1.documentIdHash() == o2.documentIdHash()) return 0;
+            return -1;
+        };
     }
 
     /**
@@ -98,11 +108,7 @@ public class InvertedIndex {
             return new ArrayList<>();
         } else {
             List<Posting> postings = new ArrayList<>(invertedIndex.get(term).values());
-            postings.sort((o1, o2) -> {
-                if (o1.documentIdHash() > o2.documentIdHash()) return 1;
-                if (o1.documentIdHash() == o2.documentIdHash()) return 0;
-                return -1;
-            });
+            postings.sort(postingComparator);
 
             return postings;
         }
@@ -119,37 +125,106 @@ public class InvertedIndex {
      * @return
      */
     public List<Posting> getPostingsForQuery(SearchQueryNode rootQuery) {
-        // query is just a term
-        if (rootQuery.isTerm()) {
-            return  getPostingsForTerm(rootQuery.getText());
+        return getPostingsForQueryRec(rootQuery, false);
+    }
+
+    /**
+     * Recursion method for getting postings for queries.
+     * @param node
+     * @param notClause If node is term and this is true, all postings except the ones of this term will be returned.
+     * @return
+     */
+    public List<Posting> getPostingsForQueryRec(SearchQueryNode node, boolean notClause) {
+        // node is term
+        if (node.isTerm()) {
+            if (notClause) {
+                // return posting of all but this term
+                String notTerm = node.getText();
+
+                // first get all unique postings
+                Set<Posting> allPostings = new HashSet<>();
+                for(String term : invertedIndex.keySet()) {
+                    allPostings.addAll(invertedIndex.get(term).values());
+                }
+
+                // now remove all postings which are relevant to notTerm
+                if (invertedIndex.containsKey(notTerm)) {
+                    for(Posting p : invertedIndex.get(notTerm).values()) {
+                        allPostings.remove(p);
+                    }
+                }
+
+                // convert set to list and sort
+                List<Posting> postings = new ArrayList<>(allPostings);
+                postings.sort(postingComparator);
+                return postings;
+
+            } else {
+                return getPostingsForTerm(node.getText());
+            }
+
+        // rootQuery represents root of boolean query tree, perform intersection of posting lists
         } else {
-            // rootQuery represents root of boolean query tree, perform intersection of posting lists
             Collection<SearchQueryNode> childQuery;
             List<Posting> res = new ArrayList<>();
-            for(BooleanClause.Occur occurrence : rootQuery.getChildren().keySet()) {
-                childQuery = rootQuery.getChildren().get(occurrence);
+            for(BooleanClause.Occur occurrence : node.getChildren().keySet()) {
+                childQuery = node.getChildren().get(occurrence);
                 switch (occurrence) {
 
                     // AND
                     case MUST:
                         for(SearchQueryNode child : childQuery) {
-                            res = andIntersect(res, getPostingsForQuery(child));
+                            res = andIntersect(res, getPostingsForQueryRec(child, false));
                         }
                         break;
 
                     // OR
                     case SHOULD:
                         for(SearchQueryNode child : childQuery) {
-                            res = orIntersect(res, getPostingsForQuery(child));
+                            res = orIntersect(res, getPostingsForQueryRec(child, false));
                         }
-                    // NOT
+                        break;
+
+                        // NOT
                     case MUST_NOT:
+                        for(SearchQueryNode child : childQuery) {
+                            res = notIntersect(child, res, getPostingsForQueryRec(child, true));
+                        }
                         break;
                 }
             }
 
             return res;
         }
+    }
+
+    /**
+     * Intersect two lists so that none of them will contain postings of given term.
+     * Basically: resultList = sourceList \ index[notTem].
+     *
+     * @param node Node which should contain notTerm.
+     * @param postingList1 Result list.
+     * @param postingList2 Source list.
+     * @return List of postings.
+     */
+    public List<Posting> notIntersect(SearchQueryNode node, List<Posting> postingList1, List<Posting> postingList2) {
+        if (postingList1.isEmpty() && postingList2.isEmpty()) {
+            return new ArrayList<>();
+        } else if (postingList2.isEmpty()) {
+            return postingList1;
+        } else if (postingList1.isEmpty()) {
+            return postingList2;
+        }
+
+        List<Posting> res = new ArrayList<>();
+
+        // lists are not empty, take items from source lists which are also in result list
+        for(Posting p : postingList2) {
+            if (postingList1.contains(p)) {
+                res.add(p);
+            }
+        }
+        return res;
     }
 
     /**
@@ -161,6 +236,16 @@ public class InvertedIndex {
      * @return AND intersection of two posting lists.
      */
     public List<Posting> andIntersect(List<Posting> postingList1, List<Posting> postingList2) {
+
+        // check for 'first timers' where at least one of the provided lists is empty.
+        if (postingList1.isEmpty() && postingList2.isEmpty()) {
+            return new ArrayList<>();
+        } else if (postingList1.isEmpty()) {
+            return new ArrayList<>(postingList2);
+        } else if (postingList2.isEmpty()) {
+            return new ArrayList<>(postingList1);
+        }
+
         int p1Cur = 0;
         int p2Cur = 0;
         List<Posting> res = new ArrayList<>();
@@ -190,6 +275,16 @@ public class InvertedIndex {
      * @return OR intersection of two posting lists.
      */
     public List<Posting> orIntersect(List<Posting> postingList1, List<Posting> postingList2) {
+
+        // check for 'first timers' where at least one of the provided lists is empty.
+        if (postingList1.isEmpty() && postingList2.isEmpty()) {
+            return new ArrayList<>();
+        } else if (postingList1.isEmpty()) {
+            return new ArrayList<>(postingList2);
+        } else if (postingList2.isEmpty()) {
+            return new ArrayList<>(postingList1);
+        }
+
         int p1Cur = 0;
         int p2Cur = 0;
         List<Posting> res = new ArrayList<>();

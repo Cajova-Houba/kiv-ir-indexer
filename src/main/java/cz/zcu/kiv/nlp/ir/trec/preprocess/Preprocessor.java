@@ -7,6 +7,9 @@ import java.util.*;
  */
 public class Preprocessor {
 
+    public static final String withDiacritics = "áÁčČďĎéÉěĚíÍňŇóÓřŘšŠťŤúÚůŮýÝžŽĆć";
+    public static final String withoutDiacritics = "aAcCdDeEeEiInNoOrRsStTuUuUyYzZCc";
+
     /**
      * Tokenizer to be used to tokenize input text.
      */
@@ -29,6 +32,17 @@ public class Preprocessor {
     }
 
     /**
+     * Processes one term (uses stemmer only).
+     * @param term Term to be processed.
+     * @return Processed term.
+     */
+    public String processTerm(String term) {
+        String t = term.toLowerCase();
+        t = removeAccents(t);
+        return stemmer.stem(t);
+    }
+
+    /**
      * Process input text.
      *
      * @param text Text to be processed.
@@ -40,6 +54,9 @@ public class Preprocessor {
         if (tokenizer == null) {
             return new String[0];
         }
+
+        text = text.toLowerCase();
+        text = removeAccents(text);
 
         // tokenize
         List<String> tokenizedText = new ArrayList<String>(Arrays.asList(tokenizer.tokenize(text)));
@@ -56,10 +73,17 @@ public class Preprocessor {
         // stemmer
         if (useStemmer && stemmer != null) {
             for (int i = 0; i < tokens.length; i++) {
-                tokens[i] = stemmer.stem(tokens[i]);
+                tokens[i] = processTerm(tokens[i]);
             }
         }
 
         return tokens;
+    }
+
+    private String removeAccents(String text) {
+        for (int i = 0; i < withDiacritics.length(); i++) {
+            text = text.replaceAll("" + withDiacritics.charAt(i), "" + withoutDiacritics.charAt(i));
+        }
+        return text;
     }
 }
