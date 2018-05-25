@@ -31,7 +31,14 @@ public class QueryParser {
         try {
             Query q =  parser.parse(query, "");
             SearchQueryNode root = new SearchQueryNode();
-            createQueryTree(q, root);
+            if (q.getClass() == TermQuery.class) {
+                root.setTerm(true);
+                root.setText(((TermQuery)q).getTerm().text());
+            } else if (q.getClass() == BooleanQuery.class) {
+                createQueryTree(q, root);
+            } else {
+                throw new RuntimeException("Query type "+q.getClass()+" is not supported!");
+            }
             return root;
         } catch (QueryNodeException e) {
             e.printStackTrace();
@@ -46,13 +53,18 @@ public class QueryParser {
      */
     private void createQueryTree(Query luceneQuery, SearchQueryNode root) {
         BooleanQuery booleanQuery = (BooleanQuery) luceneQuery;
+
         for(BooleanClause clause : booleanQuery.clauses()) {
             SearchQueryNode child = new SearchQueryNode();
             child.setText(clause.getQuery().toString());
             root.addChild(clause.getOccur(), child);
+
+            // if boolean => continue creating the tree
             if(clause.getQuery().getClass() == BooleanQuery.class) {
                 createQueryTree(clause.getQuery(), child);
-            }else if(clause.getQuery().getClass() == TermQuery.class){
+
+            // if term => end recursion here
+            } else if(clause.getQuery().getClass() == TermQuery.class){
                 child.setTerm(true);
             }
         }

@@ -45,6 +45,17 @@ public class Posting implements Serializable{
         termFrequency++;
     }
 
+    /**
+     * Returns hash of document id. If the id is null, 0 is returned.
+     * Use this to sort postings by document ids even if those aren't integers.
+     *
+     * @return Hash of document id.
+     */
+    public int documentIdHash() {
+        if (documentId == null)  { return 0; }
+        else { return documentId.hashCode(); }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -1,4 +1,4 @@
-package cz.zcu.kiv.nlp.trec;
+package cz.zcu.kiv.nlp.trec.core;
 
 import cz.zcu.kiv.nlp.ir.trec.core.CosineSimilarityCalculator;
 import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;

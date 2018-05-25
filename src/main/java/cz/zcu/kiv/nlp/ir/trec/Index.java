@@ -1,16 +1,18 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
-import cz.zcu.kiv.nlp.ir.trec.core.CosineSimilarityCalculator;
-import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
-import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculator;
+import cz.zcu.kiv.nlp.ir.trec.core.*;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Preprocessor;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Stemmer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Tokenizer;
+import org.apache.lucene.analysis.cz.CzechAnalyzer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 /**
  * @author tigi
@@ -52,19 +54,68 @@ public class Index implements Indexer, Searcher {
         }
     }
 
+    /**
+     * Internal method which performs search using query tree.
+     * @param queryRoot Root of query interpreted as a tree.
+     * @return List of results.
+     */
+    private List<Result> getResultsForQuery(SearchQueryNode queryRoot) {
+        // prepare similarity calculator
+        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
+
+        // get list of postings to search
+        List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
+
+        // get list of terms in query
+        String[] terms = queryRoot.getTerms().toArray(new String[0]);
+
+        // calculate similarity
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+        for(Posting p : postings) {
+            double score = similarityCalculator.calculateScore(terms, p.getDocumentId());
+            ResultImpl r = new ResultImpl();
+            r.setDocumentID(p.getDocumentId());
+            r.setScore((float)score);
+            resultQueue.add(r);
+        }
+
+        return getTopKResults(resultQueue, topResultCount);
+    }
+
+    private PriorityQueue<Result> prepareTopKQueue(int initialCapasity)  {
+        return new PriorityQueue<>(initialCapasity, (o1, o2) -> {
+            if (o1.getScore() > o2.getScore()) return -1;
+            if (o1.getScore() == o2.getScore()) return 0;
+            return 1;
+        });
+    }
+
+    private List<Result> getTopKResults(PriorityQueue<Result> queue, int k)  {
+        List<Result> results = new ArrayList<Result>();
+        int max = Math.min(queue.size(), k);
+        for(int i = 0; i < max; i++) {
+            ResultImpl res = (ResultImpl)queue.poll();
+            res.setRank(max - i);
+            results.add(res);
+        }
+
+        return results;
+    }
+
+    @Override
     public List<Result> search(String query) {
+        SearchQueryNode rootQuery = new QueryParser(new CzechAnalyzer()).parseQuery(query);
+
+        return getResultsForQuery(rootQuery);
+    }
+
+    private List<Result> oldSearch(String query) {
         // tokenize query and stem
         String[] tokenizedQuery = preprocessor.processText(query, true, false);
 
         // prepare priority queue for results
         List<Result> results = new ArrayList<Result>();
-        PriorityQueue<Result> resultQueue = new PriorityQueue<Result>(invertedIndex.getDocumentCount(), new Comparator<Result>() {
-            public int compare(Result o1, Result o2) {
-                if (o1.getScore() > o2.getScore()) return -1;
-                if (o1.getScore() == o2.getScore()) return 0;
-                return 1;
-            }
-        }) ;
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(invertedIndex.getDocumentCount());
 
         // compute query-document similarity for each document
         SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);

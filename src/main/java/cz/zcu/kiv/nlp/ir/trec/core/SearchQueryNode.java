@@ -2,7 +2,9 @@ package cz.zcu.kiv.nlp.ir.trec.core;
 
 import org.apache.lucene.search.BooleanClause;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,5 +45,37 @@ public class SearchQueryNode {
 
     public void setTerm(boolean term) {
         isTerm = term;
+    }
+
+    public Map<BooleanClause.Occur, Collection<SearchQueryNode>> getChildren() {
+        return children;
+    }
+
+    /**
+     * Recursively searches through the whole query tree and returns all the terms in query.
+     * @return Terms in query.
+     */
+    public List<String> getTerms() {
+        return getTermsRec(new ArrayList<>());
+    }
+
+    /**
+     * Recursively searches through the whole query tree and returns all the terms in query.
+     * Internal method used to do the actual recursion.
+     *
+     * @return Terms in query.
+     */
+    private List<String> getTermsRec(List<String> terms) {
+        if(isTerm) {
+            terms.add(this.text);
+        } else {
+            for(Map.Entry<BooleanClause.Occur, Collection<SearchQueryNode>> childOccurrence : this.children.entrySet()) {
+                for(SearchQueryNode child : childOccurrence.getValue()) {
+                    child.getTermsRec(terms);
+                }
+            }
+        }
+
+        return terms;
     }
 }
