@@ -310,7 +310,7 @@ public class InvertedIndex implements Serializable{
             p1Cur++;
         }
         while (p2Cur < postingList2.size()) {
-            res.add(postingList1.get(p2Cur));
+            res.add(postingList2.get(p2Cur));
             p2Cur++;
         }
 
