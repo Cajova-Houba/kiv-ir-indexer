@@ -2,12 +2,13 @@ package cz.zcu.kiv.nlp.ir.trec.core;
 
 import org.apache.lucene.search.BooleanClause;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * Wrapper for inverted index.
  */
-public class InvertedIndex {
+public class InvertedIndex implements Serializable{
 
     /**
      * Index which maps terms to postings.
@@ -22,17 +23,14 @@ public class InvertedIndex {
 
     /**
      * Comparator which compares postings by document id hash.
+     * Must be serializable.
      */
     private Comparator<Posting> postingComparator;
 
     public InvertedIndex() {
         invertedIndex = new HashMap<String, Map<String,Posting>>();
         indexedDocuments = new HashSet<String>();
-        postingComparator = (o1, o2) -> {
-            if (o1.documentIdHash() > o2.documentIdHash()) return 1;
-            if (o1.documentIdHash() == o2.documentIdHash()) return 0;
-            return -1;
-        };
+        postingComparator = new PostingsComparator();
     }
 
     /**
@@ -317,5 +315,17 @@ public class InvertedIndex {
         }
 
         return res;
+    }
+
+    /**
+     * Postings comparator. Serializable so that it can be saved to file.
+     */
+    private class PostingsComparator implements Comparator<Posting>, Serializable {
+        @Override
+        public int compare(Posting o1, Posting o2) {
+            if (o1.documentIdHash() > o2.documentIdHash()) return 1;
+            if (o1.documentIdHash() == o2.documentIdHash()) return 0;
+            return -1;
+        }
     }
 }
