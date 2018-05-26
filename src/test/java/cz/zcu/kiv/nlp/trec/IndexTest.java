@@ -52,7 +52,7 @@ public class IndexTest {
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     /**
@@ -67,7 +67,7 @@ public class IndexTest {
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     /**
@@ -83,13 +83,13 @@ public class IndexTest {
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
 
         results = index.search(query2);
         assertEquals("wrong number of results returned for query 2!", expResCount, results.size() );
         assertTrue("First document not returned for query 2!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("Second document not returned for query 2!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     /**
@@ -103,7 +103,7 @@ public class IndexTest {
         List<Result> results = index.search(query);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class IndexTest {
         List<Result> results = index.search(query);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class IndexTest {
 
         List<Result> results = index.search(query);
         assertEquals("wrong number of results returned!", expResCount, results.size() );
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class IndexTest {
         List<Result> results = index.search(query);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     @Test
@@ -146,14 +146,14 @@ public class IndexTest {
         List<Result> results = index.search(query);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
-        checkResultsScoreNotNan(results);
+        checkResultsScoreNotNanOrZero(results);
     }
 
     /**
-     * Checks that result scores are not NaN.
+     * Checks that result scores are not NaN or 0.
      * @param results
      */
-    private void checkResultsScoreNotNan(List<Result> results) {
+    private void checkResultsScoreNotNanOrZero(List<Result> results) {
         for(Result r : results) {
             assertFalse("Resutl "+r+" has NaN score!", Double.isNaN(r.getScore()));
         }

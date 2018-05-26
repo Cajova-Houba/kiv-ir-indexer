@@ -2,6 +2,7 @@ package cz.zcu.kiv.nlp.ir.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
+import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
@@ -9,9 +10,7 @@ import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Main class for running GUI.
@@ -81,6 +80,24 @@ public class Main {
     public static void indexDocument(Document document) {
         if (index != null) {
             index.index(Arrays.asList(document));
+        }
+    }
+
+    /**
+     * Performs search and returns results.
+     *
+     * @param query Search query.
+     * @param topK Max number of top results returned.
+     * @return
+     */
+    public static List<Result> search(String query, int topK) {
+        if (index == null) {
+            return new ArrayList<>();
+        } else {
+            if (topK > 0) {
+                index.setTopResultCount(topK);
+            }
+            return index.search(query);
         }
     }
 }

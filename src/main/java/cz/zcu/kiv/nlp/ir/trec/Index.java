@@ -42,6 +42,14 @@ public class Index implements Indexer, Searcher {
         topResultCount = DEF_TOP_RESULT_COUNT;
     }
 
+    public int getTopResultCount() {
+        return topResultCount;
+    }
+
+    public void setTopResultCount(int topResultCount) {
+        this.topResultCount = topResultCount;
+    }
+
     public void setInvertedIndex(InvertedIndex invertedIndex) {
         this.invertedIndex = invertedIndex;
     }
