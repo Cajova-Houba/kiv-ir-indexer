@@ -42,10 +42,35 @@ public class Index implements Indexer, Searcher {
         topResultCount = DEF_TOP_RESULT_COUNT;
     }
 
+    public void setInvertedIndex(InvertedIndex invertedIndex) {
+        this.invertedIndex = invertedIndex;
+    }
+
+    public InvertedIndex getInvertedIndex() {
+        return invertedIndex;
+    }
+
+    /**
+     * Returns the number of indexed documents.
+     * @return
+     */
+    public int getDocumentCount() {
+        if (invertedIndex != null) {
+            return invertedIndex.getDocumentCount();
+        } else {
+            return 0;
+        }
+    }
+
     public void index(List<Document> documents) {
         for(Document d : documents) {
             String dId = d.getId();
             String dText = d.getText();
+
+            // check that the document isn't already indexed
+            if (invertedIndex.getIndexedDocuments().contains(dId)) {
+                throw new RuntimeException("Document with id "+dId+" is already indexed!");
+            }
 
             // tokenize text and index document
             String[] tokens = preprocessor.processText(dText, true, true);
