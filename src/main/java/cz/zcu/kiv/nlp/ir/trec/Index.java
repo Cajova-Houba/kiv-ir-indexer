@@ -19,7 +19,7 @@ import java.util.Set;
 
 public class Index implements Indexer, Searcher {
 
-    public static final int DEF_TOP_RESULT_COUNT = 10;
+    public static final int DEF_TOP_RESULT_COUNT = 50;
 
     /**
      * Inverted index for documents.
@@ -32,7 +32,7 @@ public class Index implements Indexer, Searcher {
     private Preprocessor preprocessor;
 
     /**
-     * Max number of results with top score returned by search.
+     * Max number of results with top score returned by search. If < 0, then all results will be returned.
      */
     private int topResultCount;
 
@@ -60,7 +60,7 @@ public class Index implements Indexer, Searcher {
 
     /**
      * Returns the number of indexed documents.
-     * @return
+     * @return Number of indexed documents.
      */
     public int getDocumentCount() {
         if (invertedIndex != null) {
@@ -70,6 +70,7 @@ public class Index implements Indexer, Searcher {
         }
     }
 
+    @Override
     public void index(List<Document> documents) {
         for(Document d : documents) {
             String dId = d.getId();
@@ -117,17 +118,30 @@ public class Index implements Indexer, Searcher {
         return getTopKResults(resultQueue, topResultCount);
     }
 
-    private PriorityQueue<Result> prepareTopKQueue(int initialCapasity)  {
-        return new PriorityQueue<>(initialCapasity, (o1, o2) -> {
-            if (o1.getScore() > o2.getScore()) return -1;
-            if (o1.getScore() == o2.getScore()) return 0;
-            return 1;
-        });
+    /**
+     * Create result queue with descending comparator and initial capacity.
+     * @param initialCapacity Initial capacity.
+     * @return Prepared queue.
+     */
+    private PriorityQueue<Result> prepareTopKQueue(int initialCapacity)  {
+        return new PriorityQueue<>(initialCapacity, (o1, o2) -> Float.compare(o2.getScore(), o1.getScore()));
     }
 
+    /**
+     * Pulls out tok K results from queue and returns them.
+     *
+     * @param queue Queue to pull results from.
+     * @param k Max number of results to pull from query.
+     * @return Results sorted by their score in descending order.
+     */
     private List<Result> getTopKResults(PriorityQueue<Result> queue, int k)  {
-        List<Result> results = new ArrayList<Result>();
-        int max = Math.min(queue.size(), k);
+        List<Result> results = new ArrayList<>();
+        int max;
+        if (k < 0) {
+            max = queue.size();
+        } else {
+            max = Math.min(queue.size(), k);
+        }
         for(int i = 0; i < max; i++) {
             ResultImpl res = (ResultImpl)queue.poll();
             res.setRank(max - i);
@@ -142,32 +156,5 @@ public class Index implements Indexer, Searcher {
         SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
 
         return getResultsForQuery(rootQuery);
-    }
-
-    private List<Result> oldSearch(String query) {
-        // tokenize query and stem
-        String[] tokenizedQuery = preprocessor.processText(query, true, false);
-
-        // prepare priority queue for results
-        List<Result> results = new ArrayList<Result>();
-        PriorityQueue<Result> resultQueue = prepareTopKQueue(invertedIndex.getDocumentCount());
-
-        // compute query-document similarity for each document
-        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
-        for(String documentId : invertedIndex.getIndexedDocuments()) {
-            double score = similarityCalculator.calculateScore(tokenizedQuery, documentId);
-            ResultImpl r = new ResultImpl();
-            r.setDocumentID(documentId);
-            r.setScore((float)score);
-            resultQueue.add(r);
-        }
-
-        // select top K results
-        for(int i = 0; i < topResultCount; i++) {
-            ResultImpl res = (ResultImpl)resultQueue.poll();
-            res.setRank(10 - i);
-            results.add(res);
-        }
-        return results;
     }
 }

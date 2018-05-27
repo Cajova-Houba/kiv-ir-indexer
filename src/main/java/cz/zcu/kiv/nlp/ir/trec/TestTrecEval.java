@@ -17,9 +17,9 @@ import java.util.*;
 
 public class TestTrecEval {
 
-    static Logger log = Logger.getLogger(TestTrecEval.class);
-    static final String OUTPUT_DIR = "./TREC";
-    static final String STOPWORDS_CZ_1 = "stopwords-czech-1.txt";
+    private static Logger log = Logger.getLogger(TestTrecEval.class);
+    private static final String OUTPUT_DIR = "./TREC";
+    private static final String STOPWORDS_CZ_1 = "stopwords-czech-1.txt";
 
     protected static void configureLogger() {
         BasicConfigurator.resetConfiguration();
@@ -40,7 +40,7 @@ public class TestTrecEval {
         Logger.getRootLogger().setLevel(Level.INFO);
     }
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) {
         configureLogger();
 
 //        todo constructor
@@ -48,12 +48,13 @@ public class TestTrecEval {
                 new AdvancedTokenizer(),
                 new CzechStemmerAgressive(),
                 loadStopwrods(STOPWORDS_CZ_1));
+        index.setTopResultCount(-1);
 
         List<Topic> topics = SerializedDataHelper.loadTopic(new File(OUTPUT_DIR + "/topicData.bin"));
 
         File serializedData = new File(OUTPUT_DIR + "/czechData.bin");
 
-        List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<>();
         log.info("load");
         try {
             if (serializedData.exists()) {
@@ -72,20 +73,18 @@ public class TestTrecEval {
         log.info("Done.");
 
 
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
 
         for (Topic t : topics) {
             List<Result> resultHits = index.search(t.getTitle() + " " + t.getDescription());
 
-            Comparator<Result> cmp = new Comparator<Result>() {
-                public int compare(Result o1, Result o2) {
-                    if (o1.getScore() > o2.getScore()) return -1;
-                    if (o1.getScore() == o2.getScore()) return 0;
-                    return 1;
-                }
+            Comparator<Result> cmp = (o1, o2) -> {
+                if (o1.getScore() > o2.getScore()) return -1;
+                if (Float.compare(o1.getScore(), o2.getScore()) == 1) return 0;
+                return 1;
             };
 
-            Collections.sort(resultHits, cmp);
+            resultHits.sort(cmp);
             for (Result r : resultHits) {
                 final String line = r.toString(t.getId());
                 lines.add(line);
@@ -144,6 +143,6 @@ public class TestTrecEval {
      */
     private static Set<String> loadStopwrods(String resourceFileName) {
 
-        return new HashSet<String>(IOUtils.readLines(ClassLoader.getSystemResourceAsStream(resourceFileName)));
+        return new HashSet<>(IOUtils.readLines(ClassLoader.getSystemResourceAsStream(resourceFileName)));
     }
 }

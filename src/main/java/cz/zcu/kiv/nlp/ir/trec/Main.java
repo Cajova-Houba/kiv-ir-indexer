@@ -24,7 +24,7 @@ public class Main {
     public static final String STOP_WORDS_FILE_NAME = "stopwords-czech-1.txt";
 
     public static Index index;
-    static Logger log = Logger.getLogger(Main.class);
+    private static Logger log = Logger.getLogger(Main.class);
 
 
     public static void main(String[] args) {
@@ -33,7 +33,7 @@ public class Main {
         JFrame mainWindow = new MainWindow();
     }
 
-    public static void initIndex() {
+    private static void initIndex() {
         log.info("Initializing index.");
         log.info("Loading stopwrods.");
         Set<String> stopwords = new HashSet<>();
@@ -79,7 +79,7 @@ public class Main {
      */
     public static void indexDocument(Document document) {
         if (index != null) {
-            index.index(Arrays.asList(document));
+            index.index(Collections.singletonList(document));
         }
     }
 
@@ -88,15 +88,13 @@ public class Main {
      *
      * @param query Search query.
      * @param topK Max number of top results returned.
-     * @return
+     * @return Found results.
      */
     public static List<Result> search(String query, int topK) {
         if (index == null) {
             return new ArrayList<>();
         } else {
-            if (topK > 0) {
-                index.setTopResultCount(topK);
-            }
+            index.setTopResultCount(topK);
             return index.search(query);
         }
     }
