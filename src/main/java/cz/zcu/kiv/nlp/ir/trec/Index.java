@@ -77,7 +77,7 @@ public class Index implements Indexer, Searcher {
             String dText = d.getText();
 
             // check that the document isn't already indexed
-            if (invertedIndex.getIndexedDocuments().contains(dId)) {
+            if (invertedIndex.getIndexedDocumentsIds().contains(dId)) {
                 throw new RuntimeException("Document with id "+dId+" is already indexed!");
             }
 

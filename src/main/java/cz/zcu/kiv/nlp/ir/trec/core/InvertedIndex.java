@@ -17,9 +17,9 @@ public class InvertedIndex implements Serializable{
     private Map<String, Map<String,Posting>> invertedIndex;
 
     /**
-     * Ids of indexed documents.
+     * Tokenized text of indexed documents mapped to their ids.
      */
-    private Set<String> indexedDocuments;
+    private Map<String, String[]> indexedDocuments;
 
     /**
      * Comparator which compares postings by document id hash.
@@ -28,9 +28,9 @@ public class InvertedIndex implements Serializable{
     private Comparator<Posting> postingComparator;
 
     public InvertedIndex() {
-        invertedIndex = new HashMap<String, Map<String,Posting>>();
-        indexedDocuments = new HashSet<String>();
+        invertedIndex = new HashMap<>();
         postingComparator = new PostingsComparator();
+        indexedDocuments = new HashMap<>();
     }
 
     /**
@@ -39,7 +39,7 @@ public class InvertedIndex implements Serializable{
      * @param documentId Id of the document to be indexed.
      */
     public void indexDocument(String[] tokens, String documentId) {
-        indexedDocuments.add(documentId);
+        indexedDocuments.put(documentId, tokens);
 
         for(String token : tokens) {
             // create new set for term postings
@@ -56,6 +56,20 @@ public class InvertedIndex implements Serializable{
                 invertedIndex.get(token).get(documentId).incrementTermFrequency();
             }
         }
+
+    }
+
+    /**
+     * Returns array with all terms in document.
+     * @param documentId Id of document.
+     * @return Terms in document.
+     */
+    public String[] getTermsInDocument(String documentId) {
+        if (indexedDocuments.containsKey(documentId)) {
+            return indexedDocuments.get(documentId);
+        } else {
+            return new String[0];
+        }
     }
 
     /**
@@ -63,7 +77,7 @@ public class InvertedIndex implements Serializable{
      * @return
      */
     public int getDocumentCount() {
-        return indexedDocuments.size();
+        return indexedDocuments.keySet().size();
     }
 
     /**
@@ -92,8 +106,8 @@ public class InvertedIndex implements Serializable{
         return invertedIndex.get(term).get(documentId).getTermFrequency();
     }
 
-    public Set<String> getIndexedDocuments() {
-        return indexedDocuments;
+    public Set<String> getIndexedDocumentsIds() {
+        return indexedDocuments.keySet();
     }
 
     /**
