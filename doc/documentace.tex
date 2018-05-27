@@ -1,0 +1,42 @@
+\documentclass[11pt,a4paper]{scrartcl}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+
+\begin{document}
+	\title{Semestrální práce z předmětu KIV/IR}
+	\subtitle{Indexer}
+	\author{Zdeněk Valeš}
+	\date{26.5. 2018}
+	\maketitle
+	\newpage
+	
+	\section{Zadání}
+	V jazyce Java vytvořte indexer, který bude schopný indexovat zadané dokumenty a následně nad nimi provádět vyhledávání. K realizaci práce použijte připravená rozhraní.
+	
+	\section{Analýza}
+	Aplikace se skládá ze dvou částí. První část tvoří jádro, které provádí indexaci a vyhledávání, druhou část tvoří jednoduché grafické rozhraní pro práci s indexerem.
+	
+	\subsection{Jádro}
+	Jádro aplikace se skládá z indexu, textového preprocesoru  a vyhledávače. Preprocesor je použit k převedení textu (obsah dokumentu nebo vyhledávací dotaz) na tokeny a ty pak do jejich základní formy.
+	
+	\subsubsection{Index}
+	Indexované dokumenty jsou uložené v invertovaném indexu. Invertovaný index je mapa, která každému tokenu, který se v kolekci indexovaných dokumentů vyskytne, přiřadí seznam dokumentů (tzv. posting list), ve kterých se token alespoň jednou nachází. Výhodou této datové struktury oproti incidenční matici je zejména menší paměťová náročnost.
+	
+	Posting list obsahuje kromě dokumentů také počet, kolikrát se token v určitém dokumentu vyskytuje. Tento údaj je později použit při ohodnocování nalezených výsledků.
+	
+	
+	
+	\subsubsection{vyhledávač}
+	
+	
+	
+	\subsection{Uživatelské rozhraní}
+	
+	\section{Implementace}
+	
+	
+	\section{Závěr}
+	
+\end{document}
