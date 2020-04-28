@@ -28,8 +28,8 @@ public class InvertedIndex implements Serializable{
     private Comparator<Posting> postingComparator;
 
     public InvertedIndex() {
-        invertedIndex = new HashMap<String, Map<String,Posting>>();
-        indexedDocuments = new HashSet<String>();
+        invertedIndex = new HashMap<>();
+        indexedDocuments = new HashSet<>();
         postingComparator = new PostingsComparator();
     }
 
@@ -44,7 +44,7 @@ public class InvertedIndex implements Serializable{
         for(String token : tokens) {
             // create new set for term postings
             if (!invertedIndex.containsKey(token)) {
-                invertedIndex.put(token, new HashMap<String, Posting>());
+                invertedIndex.put(token, new HashMap<>());
                 invertedIndex.get(token).put(documentId, new Posting(documentId));
 
                 // add term occurrence for another doc
@@ -236,12 +236,9 @@ public class InvertedIndex implements Serializable{
     public List<Posting> andIntersect(List<Posting> postingList1, List<Posting> postingList2) {
 
         // check for 'first timers' where at least one of the provided lists is empty.
-        if (postingList1.isEmpty() && postingList2.isEmpty()) {
-            return new ArrayList<>();
-        } else if (postingList1.isEmpty()) {
-            return new ArrayList<>(postingList2);
-        } else if (postingList2.isEmpty()) {
-            return new ArrayList<>(postingList1);
+        List<Posting> resultForEmptyPosting = checkEmptyPostingsLists(postingList1, postingList2);
+        if (resultForEmptyPosting != null) {
+            return resultForEmptyPosting;
         }
 
         int p1Cur = 0;
@@ -275,12 +272,9 @@ public class InvertedIndex implements Serializable{
     public List<Posting> orIntersect(List<Posting> postingList1, List<Posting> postingList2) {
 
         // check for 'first timers' where at least one of the provided lists is empty.
-        if (postingList1.isEmpty() && postingList2.isEmpty()) {
-            return new ArrayList<>();
-        } else if (postingList1.isEmpty()) {
-            return new ArrayList<>(postingList2);
-        } else if (postingList2.isEmpty()) {
-            return new ArrayList<>(postingList1);
+        List<Posting> resultForEmptyPosting = checkEmptyPostingsLists(postingList1, postingList2);
+        if (resultForEmptyPosting != null) {
+            return resultForEmptyPosting;
         }
 
         int p1Cur = 0;
@@ -315,6 +309,18 @@ public class InvertedIndex implements Serializable{
         }
 
         return res;
+    }
+
+    private List<Posting> checkEmptyPostingsLists(List<Posting> postings1, List<Posting> postings2) {
+        if (postings1.isEmpty() && postings2.isEmpty()) {
+            return new ArrayList<>();
+        } else if (postings1.isEmpty()) {
+            return new ArrayList<>(postings2);
+        } else if (postings2.isEmpty()) {
+            return new ArrayList<>(postings1);
+        }
+
+        return null;
     }
 
     /**

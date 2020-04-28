@@ -10,10 +10,10 @@ import static org.junit.Assert.assertEquals;
 
 public class CosineSimilarityCalculatorTest {
 
-    protected InvertedIndex invertedIndex;
-    protected int documentCount;
-    protected String[] tokenizedQuery;
-    protected SimilarityCalculator similarityCalculator;
+    private InvertedIndex invertedIndex;
+    private int documentCount;
+    private String[] tokenizedQuery;
+    private SimilarityCalculator similarityCalculator;
 
 
     @Before

@@ -5,26 +5,10 @@ import java.util.Map;
 
 public class CosineSimilarityCalculator implements SimilarityCalculator {
 
-    /**
-     * Inverted index which maps words to its occurrences in documents.
-     * word -> (doc1Id -> # of occurrences, doc2Id -> # of occurrences, ...).
-     */
-    private Map<String, Map<String, Integer>> invertedIndex;
+    private InvertedIndex invertedIndex;
 
-    /**
-     * Number of document indexes.
-     */
-    private int documentCount;
-
-    private InvertedIndex iinvertedIndex;
-
-    public CosineSimilarityCalculator(Map<String, Map<String, Integer>> invertedIndex, int documentCount) {
+    public CosineSimilarityCalculator(InvertedIndex invertedIndex) {
         this.invertedIndex = invertedIndex;
-        this.documentCount = documentCount;
-    }
-
-    public CosineSimilarityCalculator(InvertedIndex iinvertedIndex) {
-        this.iinvertedIndex = iinvertedIndex;
     }
 
     public double calculateScore(String[] query, String documentId) {
@@ -70,7 +54,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public int df(String term) {
-        return iinvertedIndex.documentFrequency(term);
+        return invertedIndex.documentFrequency(term);
     }
 
     public double idf(String term) {
@@ -83,7 +67,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public double ntf(String term, String documentId) {
-        return iinvertedIndex.getTermFrequency(term, documentId);
+        return invertedIndex.getTermFrequency(term, documentId);
     }
 
     public double ltf(String term, String documentId){
@@ -96,6 +80,6 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public int getDocumentCount() {
-        return iinvertedIndex.getDocumentCount();
+        return invertedIndex.getDocumentCount();
     }
 }
