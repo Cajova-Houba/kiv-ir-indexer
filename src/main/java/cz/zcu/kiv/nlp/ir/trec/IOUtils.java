@@ -9,35 +9,10 @@ import java.util.List;
 
 /**
  * @author tigi
+ *
+ * IOUtils, existující metody neměňte.
  */
 public class IOUtils {
-
-    /**
-     * Saves given index to file. May throw exceptions.
-     *
-     * @param index Index to be saved.
-     * @param fileName Name of the file.
-     */
-    public static void saveIndex(InvertedIndex index, String fileName) throws IOException {
-        FileOutputStream fileOut = new FileOutputStream(fileName);
-        ObjectOutputStream out = new ObjectOutputStream(fileOut);
-        out.writeObject(index);
-        out.close();
-        fileOut.close();
-    }
-
-    /**
-     * Loads index from file and returns it. May throw exceptions.
-     *
-     * @param fileName Name of the file to load index from.
-     * @return Loaded index.
-     */
-    public static InvertedIndex loadIndex(String fileName) throws IOException, ClassNotFoundException {
-        final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(fileName));
-        final Object object = objectInputStream.readObject();
-        objectInputStream.close();
-        return (InvertedIndex) object;
-    }
 
     /**
      * Read lines from the stream; lines are trimmed and empty lines are ignored.

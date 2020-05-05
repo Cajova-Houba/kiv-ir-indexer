@@ -15,8 +15,15 @@ import java.util.Set;
 
 /**
  * @author tigi
+ *
+ * Třída reprezentující index.
+ *
+ * Tuto třídu doplňte tak aby implementovala rozhranní {@link Indexer} a {@link Searcher}.
+ * Pokud potřebujete, přidejte další rozhraní, která tato třída implementujte nebo
+ * přidejte metody do rozhraní {@link Indexer} a {@link Searcher}.
+ *
+ *
  */
-
 public class Index implements Indexer, Searcher {
 
     public static final int DEF_TOP_RESULT_COUNT = 50;

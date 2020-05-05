@@ -4,6 +4,11 @@ import java.io.Serializable;
 
 /**
  * Created by Tigi on 8.1.2015.
+ *
+ * Tuto třídu neměnte, pro vypracování semestrální práce není potřeba.
+ *
+ * Třída Topic představuje dotaz pro předpřipravené dokumenty.
+ * Obsahuje tři textová pole narrative, description a title, která můžete použít ve vašem dotazu.
  */
 public class Topic implements Serializable {
     String narrative;

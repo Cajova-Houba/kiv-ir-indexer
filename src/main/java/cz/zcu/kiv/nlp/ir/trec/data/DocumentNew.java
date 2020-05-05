@@ -5,6 +5,12 @@ import java.util.Date;
 
 /**
  * Created by Tigi on 8.1.2015.
+ *
+ * Ukázka implementace rozhraní {@link Document}
+ *
+ * Tuto třídu si můžete libovolně upravovat pokud vám nevyhovuje nebo můžete vytvořit vlastní třídu, která
+ * implementuje rozhraní {@link Document}.
+ *
  */
 public class DocumentNew implements Document, Serializable {
     String text;
@@ -12,14 +18,6 @@ public class DocumentNew implements Document, Serializable {
     String title;
     Date date;
     final static long serialVersionUID = -5097715898427114007L;
-
-    public DocumentNew() {
-    }
-
-    public DocumentNew(String text, String id) {
-        this.text = text;
-        this.id = id;
-    }
 
     @Override
     public String toString() {

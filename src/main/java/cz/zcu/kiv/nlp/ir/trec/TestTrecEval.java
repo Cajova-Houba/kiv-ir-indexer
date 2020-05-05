@@ -13,8 +13,10 @@ import java.util.*;
 
 /**
  * @author tigi
+ *
+ * Třída slouží pro vyhodnocení vámi vytvořeného vyhledávače
+ *
  */
-
 public class TestTrecEval {
 
     private static Logger log = Logger.getLogger(TestTrecEval.class);
@@ -40,14 +42,26 @@ public class TestTrecEval {
         Logger.getRootLogger().setLevel(Level.INFO);
     }
 
+    /**
+     * Metoda vytvoří objekt indexu, načte data, zaindexuje je provede předdefinované dotazy a výsledky vyhledávání
+     * zapíše souboru a pokusí se spustit evaluační skript.
+     *
+     * Na windows evaluační skript pravděpodbně nebude možné spustit. Pokud chcete můžete si skript přeložit a pak
+     * by mělo být možné ho spustit.
+     *
+     * Pokud se váme skript nechce překládat/nebo se vám to nepodaří. Můžete vygenerovaný soubor s výsledky zkopírovat a
+     * spolu s přiloženým skriptem spustit (přeložit) na
+     * Linuxu např. pomocí vašeho účtu na serveru ares.fav.zcu.cz
+     *
+     * Metodu není třeba měnit kromě řádků označených T O D O  - tj. vytvoření objektu třídy {@link Index} a
+     */
     public static void main(String args[]) {
         configureLogger();
 
-//        todo constructor
         Index index = new Index(
                 new AdvancedTokenizer(),
                 new CzechStemmerAgressive(),
-                loadStopwrods(STOPWORDS_CZ_1));
+                loadStopwords(STOPWORDS_CZ_1));
         index.setTopResultCount(-1);
 
         List<Topic> topics = SerializedDataHelper.loadTopic(new File(OUTPUT_DIR + "/topicData.bin"));
@@ -76,6 +90,11 @@ public class TestTrecEval {
         List<String> lines = new ArrayList<>();
 
         for (Topic t : topics) {
+            //TODO vytvoření dotazu, třída Topic představuje dotaz pro vyhledávání v zaindexovaných dokumentech
+            //a obsahuje tři textová pole title, description a narrative. To jak sestavíte dotaz je na Vás a pravděpodobně
+            //to ovlivní výsledné vyhledávání - zkuste změnit a uvidíte jaký MAP (Mean Average Precision) dostanete pro jednotlivé
+            //kombinace např. pokud budete vyhledávat jen pomocí title (t.getTitle()) nebo jen pomocí description (t.getDescription())
+            //nebo jejich kombinací (t.getTitle() + " " + t.getDescription())
             List<Result> resultHits = index.search(t.getTitle() + " " + t.getDescription());
 
             Comparator<Result> cmp = (o1, o2) -> {
@@ -136,12 +155,12 @@ public class TestTrecEval {
     }
 
     /**
-     * Loads stopword from file placed in resource folder.
+     * Loads stopwords from file placed in resource folder.
      *
      * @param resourceFileName Name of the file in resource folder.
      * @return Stopword.
      */
-    private static Set<String> loadStopwrods(String resourceFileName) {
+    private static Set<String> loadStopwords(String resourceFileName) {
 
         return new HashSet<>(IOUtils.readLines(ClassLoader.getSystemResourceAsStream(resourceFileName)));
     }
