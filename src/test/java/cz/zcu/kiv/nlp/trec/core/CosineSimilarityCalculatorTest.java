@@ -101,8 +101,11 @@ public class CosineSimilarityCalculatorTest {
         }
     }
 
+    /**
+     * Calculate cosine similarity between D1 and query.
+     */
     @Test
-    public void testCalculateScore() {
+    public void testCalculateScoreD1() {
         // expected score for query and document 1
         // 1. ltf for all terms in query for document 1
         double[] docLtfs = new double[] {
@@ -133,7 +136,33 @@ public class CosineSimilarityCalculatorTest {
         }
         String documentId = "d1";
 
+        double expectedScore = 0.84671;
+
         double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
-        assertEquals("Wrong score for query-document1!", expectedSimilarity, realScore, 0.01);
+        assertEquals("Wrong score for query-document1!", expectedScore, realScore, 0.01);
+    }
+
+    /**
+     * Calculate cosine similarity between D2 and query.
+     */
+    @Test
+    public void testCalculateScoreD2() {
+        String documentId = "d2";
+        double expectedScore = 0.43976;
+        double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+        assertEquals("Wrong score for query-document2!", expectedScore, realScore, 0.01);
+    }
+
+    /**
+     * Calculate cosine similarity between D3 and query.
+     */
+    @Test
+    public void testCalculateScoreD3() {
+        String documentId = "d3";
+
+        double expectedScore = 0;
+
+        double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+        assertEquals("Wrong score for query-document3!", expectedScore, realScore, 0.01);
     }
 }

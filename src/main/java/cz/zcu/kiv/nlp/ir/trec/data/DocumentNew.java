@@ -19,6 +19,14 @@ public class DocumentNew implements Document, Serializable {
     Date date;
     final static long serialVersionUID = -5097715898427114007L;
 
+    public DocumentNew() {
+    }
+
+    public DocumentNew(String text, String id) {
+        this.text = text;
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "DocumentNew{" +

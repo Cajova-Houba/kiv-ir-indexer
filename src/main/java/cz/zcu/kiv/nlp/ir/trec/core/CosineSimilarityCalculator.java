@@ -39,6 +39,8 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
             cosNormConstant = 1/Math.sqrt(cosNormConstant);
         }
 
+        // iterate over terms in query, # of tokens in it
+        // should be < than number of tokens in document
         for(String token : queryTermF.keySet()) {
             // weighted query term frequency
             double qtf = (1 + Math.log(queryTermF.get(token)))*idf(token);
