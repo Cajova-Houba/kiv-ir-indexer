@@ -112,6 +112,23 @@ public class InvertedIndex implements Serializable{
         }
     }
 
+    public List<String> getTermsFormDocument(String documentId) {
+        if (!indexedDocuments.contains(documentId)) {
+            return Collections.emptyList();
+        } else {
+            List<String> terms = new ArrayList<>();
+            for(String term : invertedIndex.keySet()) {
+                for(String docId: invertedIndex.get(term).keySet()) {
+                    if (docId.equals(documentId)) {
+                        terms.add(term);
+                    }
+                }
+            }
+
+            return terms;
+        }
+    }
+
     /**
      * Gets the posting list that should be used for query. In case of term, simple postings list from
      * inverted index is returned. Otherwise intersection of more postings list is performed and the result

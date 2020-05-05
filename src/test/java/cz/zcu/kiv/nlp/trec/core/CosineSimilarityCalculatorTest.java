@@ -58,8 +58,8 @@ public class CosineSimilarityCalculatorTest {
         // expected ltf for each query token in document d1
         double[] expectedLtf = new double[] {
                 0,
-                1 + Math.log(1),
-                1 + Math.log(2)
+                1 + Math.log10(1),
+                1 + Math.log10(2)
         };
         String documentId = "d1";
 
@@ -89,8 +89,8 @@ public class CosineSimilarityCalculatorTest {
         // expected inverted document frequencies for terms in query
         double[] expectedIdf = new double[] {
                 0,
-                Math.log(documentCount / 2.0),
-                Math.log(documentCount / 2.0)
+                Math.log10(documentCount / 2.0),
+                Math.log10(documentCount / 2.0)
         };
 
         int i = 0;
@@ -106,38 +106,8 @@ public class CosineSimilarityCalculatorTest {
      */
     @Test
     public void testCalculateScoreD1() {
-        // expected score for query and document 1
-        // 1. ltf for all terms in query for document 1
-        double[] docLtfs = new double[] {
-                0,
-                1 + Math.log(1),
-                1 + Math.log(2)
-        };
-
-        // 2. use those ltfs to calculate cosine normalization constant
-        double cosNormConst = 0;
-        for(double w : docLtfs) {
-            cosNormConst += w*w;
-        }
-        cosNormConst = 1/Math.sqrt(cosNormConst);
-
-        // 3. tf-idf for all terms in query
-        // this ones is calculated as tf-idf(query, query)
-        double[] queryTfIdf = new double[] {
-                0,
-                Math.log(documentCount / 2.0) * (1+Math.log(1)),
-                Math.log(documentCount / 2.0) * (1+Math.log(1))
-        };
-
-        // 4. expected cosine similarity
-        double expectedSimilarity = 0;
-        for(int i = 0; i < docLtfs.length; i++) {
-            expectedSimilarity += queryTfIdf[i] * docLtfs[i] * cosNormConst;
-        }
         String documentId = "d1";
-
         double expectedScore = 0.84671;
-
         double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
         assertEquals("Wrong score for query-document1!", expectedScore, realScore, 0.01);
     }
