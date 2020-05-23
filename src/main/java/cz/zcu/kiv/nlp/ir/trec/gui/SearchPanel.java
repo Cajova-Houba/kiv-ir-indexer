@@ -1,5 +1,6 @@
 package cz.zcu.kiv.nlp.ir.trec.gui;
 
+import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import org.slf4j.Logger;
@@ -18,7 +19,11 @@ public class SearchPanel extends JPanel {
 
     private static Logger log = LoggerFactory.getLogger(SearchPanel.class);
 
+    private static String FOUND_DOC_LABEL = "Found documents";
+
     private JTextField queryField;
+    private SpinnerNumberModel topResultsModel;
+    private JLabel foundDocumentsCount;
 
     private ResultTableDataModel resultModel;
 
@@ -41,15 +46,18 @@ public class SearchPanel extends JPanel {
         resultTable.setFillsViewportHeight(true);
         JScrollPane scrollPane = new JScrollPane(resultTable);
         resultDisplay.setLayout(new BoxLayout(resultDisplay, BoxLayout.Y_AXIS));
-        resultDisplay.add(new JLabel("Found documents"));
+        foundDocumentsCount = new JLabel(FOUND_DOC_LABEL);
+        resultDisplay.add(foundDocumentsCount);
         resultDisplay.add(scrollPane);
         return resultDisplay;
     }
 
     private JPanel createSearchForm() {
         JPanel searchForm = new JPanel(new FlowLayout());
+        prepareSpinnerModel();
         queryField = new JTextField(20);
         searchForm.add(queryField);
+        searchForm.add(new JSpinner(topResultsModel));
         searchForm.add(new JButton(new AbstractAction("Search") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -63,9 +71,10 @@ public class SearchPanel extends JPanel {
 
                 try {
                     log.debug("Performing search.");
-                    java.util.List<Result> results = Main.search(query, 10);
-                    log.debug("Done.");
+                    java.util.List<Result> results = Main.search(query, topResultsModel.getNumber().intValue());
+                    log.debug("Done, {} results found.", results.size());
 
+                    updateFoundCount(results.size());
                     resultModel.clearResults();
                     resultModel.addResults(results);
                 } catch (Exception ex) {
@@ -75,6 +84,14 @@ public class SearchPanel extends JPanel {
             }
         }));
         return searchForm;
+    }
+
+    private void prepareSpinnerModel() {
+        topResultsModel = new SpinnerNumberModel(Configuration.getMinTopKResults(), Configuration.getMinTopKResults(), Configuration.getMaxTopKResults(), 1);
+    }
+
+    private void updateFoundCount(int size) {
+        foundDocumentsCount.setText(FOUND_DOC_LABEL + "("+size+")");
     }
 
     /**
