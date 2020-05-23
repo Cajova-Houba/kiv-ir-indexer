@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec.gui;
 
 import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.IndexManagementPanel;
+import cz.zcu.kiv.nlp.ir.trec.gui.search.SearchPanel;
 
 import javax.swing.*;
 import java.awt.*;

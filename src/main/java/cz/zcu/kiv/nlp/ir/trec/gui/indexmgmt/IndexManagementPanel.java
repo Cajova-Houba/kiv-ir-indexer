@@ -61,7 +61,17 @@ public class IndexManagementPanel extends JPanel {
         panel.setMaximumSize(new Dimension(300,100));
         panel.setBorder(BorderFactory.createTitledBorder("Index documents from file"));
 
-        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file"));
+        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file", getParent()) {
+            @Override
+            public void onError(String error) {
+                showErrorMessage(error);
+            }
+
+            @Override
+            public void onIndexingFinished() {
+                setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+            }
+        });
         panel.add(indexDocumentsFromFile);
 
         return panel;

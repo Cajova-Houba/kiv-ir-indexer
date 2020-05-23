@@ -1,4 +1,4 @@
-package cz.zcu.kiv.nlp.ir.trec.gui;
+package cz.zcu.kiv.nlp.ir.trec.gui.search;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;

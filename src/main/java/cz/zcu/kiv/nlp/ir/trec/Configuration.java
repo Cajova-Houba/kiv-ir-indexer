@@ -3,7 +3,7 @@ package cz.zcu.kiv.nlp.ir.trec;
 public class Configuration {
 
     public static String getDateFormat() {
-        return "dd.MM.yyyy";
+        return "dd.MM.yyyy HH:mm";
     }
 
     public static int getMinTopKResults() {

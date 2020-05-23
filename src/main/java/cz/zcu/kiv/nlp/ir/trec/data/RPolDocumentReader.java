@@ -38,7 +38,7 @@ public class RPolDocumentReader {
         String username = rpolData.get("username").toString();
         Object timestampStr = rpolData.get("timestamp");
         String text = rpolData.get("text").toString();
-        String id = username+":"+text.hashCode();
+        String id = username+":"+text.hashCode()+":"+UUID.randomUUID();
         int score = (Integer)rpolData.get("score");
 
         DocumentNew d = new DocumentNew(text, id);

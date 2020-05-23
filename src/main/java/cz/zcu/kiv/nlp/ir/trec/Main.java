@@ -98,6 +98,17 @@ public class Main {
     }
 
     /**
+     * Adds a collection of documents to index.
+     *
+     * @param documents Documents to be indexed.
+     */
+    public static void indexDocuments(List<Document> documents) {
+        if (index != null) {
+            index.index(documents);
+        }
+    }
+
+    /**
      * Performs search and returns results.
      *
      * @param query Search query.
