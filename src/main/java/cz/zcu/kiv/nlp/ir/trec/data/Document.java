@@ -39,4 +39,16 @@ public interface Document {
      */
     Date getDate();
 
+    /**
+     * Returns the value of Reddit score. 0 by default.
+     * @return Reddit score.
+     */
+    int getRedditScore();
+
+    /**
+     * Returns the Reddit username of the creator of this document.
+     * @return Reddit username.
+     */
+    String getUsername();
+
 }

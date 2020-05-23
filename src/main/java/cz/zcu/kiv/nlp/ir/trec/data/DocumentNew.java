@@ -17,6 +17,8 @@ public class DocumentNew implements Document, Serializable {
     String id;
     String title;
     Date date;
+    int redditScore;
+    String username;
     final static long serialVersionUID = -5097715898427114007L;
 
     public DocumentNew() {
@@ -25,6 +27,7 @@ public class DocumentNew implements Document, Serializable {
     public DocumentNew(String text, String id) {
         this.text = text;
         this.id = id;
+        this.redditScore = 0;
     }
 
     @Override
@@ -68,5 +71,23 @@ public class DocumentNew implements Document, Serializable {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    @Override
+    public int getRedditScore() {
+        return redditScore;
+    }
+
+    public void setRedditScore(int redditScore) {
+        this.redditScore = redditScore;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
