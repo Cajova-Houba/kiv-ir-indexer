@@ -1,5 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec.gui;
 
+import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.IndexManagementPanel;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -10,7 +12,7 @@ public class MainWindow extends JFrame {
 
     public MainWindow() {
         setTitle("KIV/IR Indexer");
-        setSize(800,400);
+        setSize(800,800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(false);

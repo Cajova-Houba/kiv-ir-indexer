@@ -1,7 +1,9 @@
-package cz.zcu.kiv.nlp.ir.trec.gui;
+package cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt;
 
+import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;
-import cz.zcu.kiv.nlp.ir.trec.data.DocumentNew;
+import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexDocumentsFromFile;
+import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexSingleDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +11,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 /**
@@ -19,19 +20,18 @@ public class IndexManagementPanel extends JPanel {
 
     private static Logger log = LoggerFactory.getLogger(IndexManagementPanel.class);
 
-    public static final String DATE_FORMAT = "dd.MM.yyyy";
-
     private JTextField documentIdField;
     private JTextField documentTitleField;
     private JTextArea documentTextArea;
     private JFormattedTextField documentDateField;
     private JLabel indexedDocumentsCountDisplay;
-    private JButton indexBtn;
+    private JButton indexBtn, indexDocumentsFromFile;
 
     public IndexManagementPanel() {
         super();
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(300,400));
+        setAlignmentY(Component.TOP_ALIGNMENT);
+        setPreferredSize(new Dimension(300,800));
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Index management"),
                 BorderFactory.createEmptyBorder(10,10,10,10)
@@ -43,14 +43,36 @@ public class IndexManagementPanel extends JPanel {
     private void addComponents() {
         add(createIndexedDocumentsNumDisplay());
         add(createIndexDocumentPanel());
+        add(createIndexDataFromFilePanel());
+        add(Box.createVerticalStrut(50));
         add(createSaveIndexBtn());
         add(createLoadIndexBtn());
+        add(Box.createVerticalBox());
+    }
+
+    /**
+     * Panel with components able to load file, parse documents and index them.
+     * @return
+     */
+    private Component createIndexDataFromFilePanel() {
+        JPanel panel = new JPanel();
+        panel.setAlignmentX(0.5f);
+        panel.setAlignmentY(Component.TOP_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(300,100));
+        panel.setBorder(BorderFactory.createTitledBorder("Index documents from file"));
+
+        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file"));
+        panel.add(indexDocumentsFromFile);
+
+        return panel;
     }
 
     private JPanel createIndexedDocumentsNumDisplay() {
         JPanel panel = new JPanel();
         panel.setAlignmentX(0.5f);
-        panel.setSize(50,20);
+        panel.setAlignmentY(Component.TOP_ALIGNMENT);
+        panel.setSize(300,20);
+        panel.setMaximumSize(new Dimension(300,20));
         indexedDocumentsCountDisplay = new JLabel("0");
         panel.add(new JLabel("# of indexed documents: "));
         panel.add(indexedDocumentsCountDisplay);
@@ -59,14 +81,17 @@ public class IndexManagementPanel extends JPanel {
 
     private JPanel createIndexDocumentPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
+        panel.setSize(400,300);
+        panel.setMaximumSize(new Dimension(300,300));
         panel.setAlignmentX(0.5f);
+        panel.setAlignmentY(Component.TOP_ALIGNMENT);
         panel.setBorder(BorderFactory.createTitledBorder("Index new document"));
 
         // init components
         documentIdField = new JTextField(10);
         documentTextArea = new JTextArea(7,18);
         documentTitleField = new JTextField(10);
-        documentDateField = new JFormattedTextField(new SimpleDateFormat(DATE_FORMAT));
+        documentDateField = new JFormattedTextField(new SimpleDateFormat(Configuration.getDateFormat()));
         resetNewDocForm();
 
         // add form components
@@ -83,42 +108,19 @@ public class IndexManagementPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(documentTextArea);
         panel.add(scrollPane, createContrains(0,4,2,2));
 
-        indexBtn = new JButton(new AbstractAction("Index") {
+        indexBtn = new JButton(new IndexSingleDocument("Index", documentIdField, documentTitleField, documentTextArea, documentDateField) {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                String err = "";
-                if (documentIdField.getText().isEmpty()) {
-                    err = "Id field is empty!";
-                } else if (documentTitleField.getText().isEmpty()) {
-                    err = "Title field is empty!";
-                } else if (documentDateField.getText().isEmpty()) {
-                    err = "Date field is empty!";
-                } else if (documentTextArea.getText().isEmpty()) {
-                    err = "Text field is empty!";
-                }
+            public void onError(String error) {
+                showErrorMessage(error);
+            }
 
-                if (!err.isEmpty()) {
-                    showErrorMessage(err);
-                    return;
-                }
-
-                DocumentNew d = new DocumentNew(documentTextArea.getText(), documentIdField.getText());
-                try {
-                    d.setDate(new SimpleDateFormat(DATE_FORMAT).parse(documentDateField.getText()));
-                } catch (ParseException e1) {
-                    showErrorMessage("Error while parsing date in date field: "+e1.getMessage());
-                    return;
-                }
-                d.setTitle(documentTitleField.getText());
-                try {
-                    Main.indexDocument(d);
-                } catch (Exception ex) {
-                    showErrorMessage("Error while indexing document: "+ex.getMessage());
-                }
+            @Override
+            public void onIndexingFinished() {
                 setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
                 resetNewDocForm();
             }
         });
+
         panel.add(indexBtn, createContrains(1,6,1,1));
 
         return panel;
@@ -129,7 +131,7 @@ public class IndexManagementPanel extends JPanel {
                 col,row,
                 rowspan,colspan,
                 0.5,0.5,
-                GridBagConstraints.CENTER,
+                GridBagConstraints.NORTH,
                 GridBagConstraints.NONE,
                 new Insets(0,0,0,0),
                 0,0
@@ -212,7 +214,7 @@ public class IndexManagementPanel extends JPanel {
     protected void resetNewDocForm() {
         documentIdField.setText("");
         documentTitleField.setText("");
-        documentDateField.setText(new SimpleDateFormat(DATE_FORMAT).format(new java.util.Date()));
+        documentDateField.setText(new SimpleDateFormat(Configuration.getDateFormat()).format(new java.util.Date()));
         documentTextArea.setText("");
     }
 

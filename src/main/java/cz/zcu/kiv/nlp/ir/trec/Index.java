@@ -4,7 +4,6 @@ import cz.zcu.kiv.nlp.ir.trec.core.*;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
-import cz.zcu.kiv.nlp.ir.trec.gui.IndexManagementPanel;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Preprocessor;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Stemmer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Tokenizer;
