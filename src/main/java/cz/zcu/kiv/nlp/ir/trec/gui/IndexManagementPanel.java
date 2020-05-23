@@ -2,6 +2,8 @@ package cz.zcu.kiv.nlp.ir.trec.gui;
 
 import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.data.DocumentNew;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +16,8 @@ import java.text.SimpleDateFormat;
  * Panel for managing search index.
  */
 public class IndexManagementPanel extends JPanel {
+
+    private static Logger log = LoggerFactory.getLogger(IndexManagementPanel.class);
 
     public static final String DATE_FORMAT = "dd.MM.yyyy";
 
@@ -136,16 +140,23 @@ public class IndexManagementPanel extends JPanel {
         JButton btn = new JButton(new AbstractAction("Save index") {
             @Override
             public void actionPerformed(ActionEvent e) {
+                log.info("Saving index to file, waiting for user to choose it ...");
+
                 final JFileChooser fc = new JFileChooser();
                 int returnVal = fc.showSaveDialog(IndexManagementPanel.this.getParent());
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = fc.getSelectedFile();
+                    log.debug("Saving to file: {}", file.getPath());
                     try {
                         Main.saveIndexToFile(file.getPath());
-                    } catch (Exception ex) {
+                        log.info("Save successful.");
+                    } catch (Exception ex){
+                        log.error("Exception while saving index to file: ", ex);
                         IndexManagementPanel.this.showErrorMessage("Unexpected error occurred while saving index: " + ex.getMessage());
                     }
+                } else {
+                    log.info("User has cancelled the action.");
                 }
             }
         });
@@ -158,20 +169,28 @@ public class IndexManagementPanel extends JPanel {
         JButton btn = new JButton(new AbstractAction("Load index") {
             @Override
             public void actionPerformed(ActionEvent e) {
+                log.info("Loading index from file, waiting for user to choose it ...");
+
                 final JFileChooser fc = new JFileChooser();
                 int returnVal = fc.showOpenDialog(IndexManagementPanel.this.getParent());
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = fc.getSelectedFile();
+                    log.debug("File name: {}", file.getPath());
                     if (!file.exists()) {
+                        log.warn("This file does not exist.");
                         return;
                     }
                     try {
                         Main.loadIndexFromFile(file.getPath());
                         setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+                        log.info("Index successfully loaded from file.");
                     } catch (Exception ex) {
+                        log.error("Exception while loading index from file: ", ex);
                         IndexManagementPanel.this.showErrorMessage("Unexpected error occurred while loading index: " + ex.getMessage());
                     }
+                } else {
+                    log.info("User has cancelled the action.");
                 }
             }
         });

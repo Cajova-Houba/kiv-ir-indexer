@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 
 import java.util.List;
 
@@ -15,5 +16,5 @@ import java.util.List;
  * Metodu search implementujte ve tříde {@link Index}
  */
 public interface Searcher {
-    List<Result> search(String query);
+    List<Result> search(String query) throws QueryNodeException;
 }

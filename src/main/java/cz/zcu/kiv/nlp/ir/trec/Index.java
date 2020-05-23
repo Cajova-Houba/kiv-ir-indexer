@@ -4,9 +4,13 @@ import cz.zcu.kiv.nlp.ir.trec.core.*;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
+import cz.zcu.kiv.nlp.ir.trec.gui.IndexManagementPanel;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Preprocessor;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Stemmer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.Tokenizer;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +29,8 @@ import java.util.Set;
  *
  */
 public class Index implements Indexer, Searcher {
+
+    private static Logger log = LoggerFactory.getLogger(Index.class);
 
     public static final int DEF_TOP_RESULT_COUNT = 50;
 
@@ -100,19 +106,25 @@ public class Index implements Indexer, Searcher {
      * @return List of results.
      */
     private List<Result> getResultsForQuery(SearchQueryNode queryRoot) {
+        log.debug("Getting results for query.");
+
         // prepare similarity calculator
+        log.trace("Initializing cosine similarity calculator.");
         SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
 
         // get list of postings to search
+        log.trace("Getting list of postings to search.");
         List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
         if(postings.isEmpty()) {
             return new ArrayList<>();
         }
 
         // get list of terms in query
+        log.trace("Extracting terms from query.");
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
 
         // calculate similarity
+        log.trace("Calculating similarity.");
         PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
         for(Posting p : postings) {
             double score = similarityCalculator.calculateScore(terms, p.getDocumentId());
@@ -122,6 +134,7 @@ public class Index implements Indexer, Searcher {
             resultQueue.add(r);
         }
 
+        log.trace("Fetching results.");
         return getTopKResults(resultQueue, topResultCount);
     }
 
@@ -159,8 +172,14 @@ public class Index implements Indexer, Searcher {
     }
 
     @Override
-    public List<Result> search(String query) {
+    public List<Result> search(String query) throws QueryNodeException {
+        log.debug("Parsing query \"{}\".", query);
         SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
+        if (rootQuery == null) {
+            log.warn("Null query returned.");
+            return null;
+        }
+        log.debug("Done");
 
         return getResultsForQuery(rootQuery);
     }

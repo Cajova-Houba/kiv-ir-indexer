@@ -2,6 +2,8 @@ package cz.zcu.kiv.nlp.ir.trec.gui;
 
 import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -13,6 +15,8 @@ import java.util.ArrayList;
  * Panel for search form and result display.
  */
 public class SearchPanel extends JPanel {
+
+    private static Logger log = LoggerFactory.getLogger(SearchPanel.class);
 
     private JTextField queryField;
 
@@ -50,18 +54,23 @@ public class SearchPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String query = queryField.getText();
+                log.info("Executing query \"{}\"", query);
                 if (query.isEmpty()) {
+                    log.warn("Query is empty.");
                     showErrorMessage("No query!");
                     return;
                 }
 
                 try {
+                    log.debug("Performing search.");
                     java.util.List<Result> results = Main.search(query, 10);
+                    log.debug("Done.");
+
                     resultModel.clearResults();
                     resultModel.addResults(results);
                 } catch (Exception ex) {
+                    log.error("Unexpected error while executing the query: ", ex);
                     showErrorMessage("Unexpected exception occurred while performing search: "+ex.getMessage());
-                    return;
                 }
             }
         }));

@@ -6,6 +6,7 @@ import cz.zcu.kiv.nlp.ir.trec.data.Topic;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
 import org.apache.log4j.*;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 
 import java.io.*;
 import java.util.*;
@@ -55,7 +56,7 @@ public class TestTrecEval {
      *
      * Metodu není třeba měnit kromě řádků označených T O D O  - tj. vytvoření objektu třídy {@link Index} a
      */
-    public static void main(String args[]) {
+    public static void main(String args[]) throws QueryNodeException {
         configureLogger();
 
         Index index = new Index(

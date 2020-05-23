@@ -6,6 +6,7 @@ import cz.zcu.kiv.nlp.ir.trec.data.DocumentNew;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +45,7 @@ public class IndexTest {
      * Simple search with one term.
      */
     @Test
-    public void testSimpleSearch() {
+    public void testSimpleSearch() throws QueryNodeException {
         String query = "auto";
         int expResCount = 2;
 
@@ -59,7 +60,7 @@ public class IndexTest {
      * Simple AND query.
      */
     @Test
-    public void testSimpleAndSearch() {
+    public void testSimpleAndSearch() throws QueryNodeException {
         String query = "auto AND pojisteni";
         int expResCount = 2;
 
@@ -74,7 +75,7 @@ public class IndexTest {
      * Simple OR query.
      */
     @Test
-    public void testSimpleOrSearch() {
+    public void testSimpleOrSearch() throws QueryNodeException {
         String query1 = "auto nejhorsi";
         String query2 = "auto OR nejhorsi";
         int expResCount = 2;
@@ -96,7 +97,7 @@ public class IndexTest {
      * Test simple NOT.
      */
     @Test
-    public void testSimpleNotSearch() {
+    public void testSimpleNotSearch() throws QueryNodeException {
         String query = "NOT auto";
         int expResCount = 1;
 
@@ -107,7 +108,7 @@ public class IndexTest {
     }
 
     @Test
-    public void testNotSearch1() {
+    public void testNotSearch1() throws QueryNodeException {
         String query = "NOT auto NOT pojisteni";
         int expResCount = 1;
 
@@ -118,7 +119,7 @@ public class IndexTest {
     }
 
     @Test
-    public void testNotSearch2() {
+    public void testNotSearch2() throws QueryNodeException {
         String query = "NOT auto NOT pojisteni NOT uplne";
         int expResCount = 0;
 
@@ -128,7 +129,7 @@ public class IndexTest {
     }
 
     @Test
-    public void testComplexSearch1() {
+    public void testComplexSearch1() throws QueryNodeException {
         String query = "(NOT vozidlo) AND (NOT irelevantni)";
         int expResCount = 1;
 
@@ -139,7 +140,7 @@ public class IndexTest {
     }
 
     @Test
-    public void testComplexSearch2() {
+    public void testComplexSearch2() throws QueryNodeException {
         String query = "((NOT vozidlo) AND (NOT irelevantni) OR  (pojisteni AND nejhorsi))";
         int expResCount = 1;
 

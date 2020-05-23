@@ -6,7 +6,9 @@ import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
-import org.apache.log4j.Logger;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -24,28 +26,40 @@ public class Main {
     public static final String STOP_WORDS_FILE_NAME = "stopwords-czech-1.txt";
 
     public static Index index;
-    private static Logger log = Logger.getLogger(Main.class);
+    private static Logger log = LoggerFactory.getLogger(Main.class);
 
 
     public static void main(String[] args) {
-        initIndex();
+        boolean indexStatus = initIndex();
+
+        if (!indexStatus) {
+            log.warn("Failed to initialize index, exiting application.");
+            return;
+        }
 
         JFrame mainWindow = new MainWindow();
     }
 
-    private static void initIndex() {
+    private static boolean initIndex() {
+        log.info("");
+        log.info("=====================");
         log.info("Initializing index.");
+        log.info("=====================");
+        log.info("");
         log.info("Loading stopwrods.");
-        Set<String> stopwords = new HashSet<>();
+        Set<String> stopwords;
         try {
             stopwords = new HashSet<>(IOUtils.readLines(ClassLoader.getSystemResourceAsStream(STOP_WORDS_FILE_NAME)));
         } catch (Exception ex) {
             log.error("Error while loading stopwords from resource file "+STOP_WORDS_FILE_NAME+": "+ex.getMessage());
+            return false;
         }
         log.info("Done");
 
         index = new Index(new AdvancedTokenizer(), new CzechStemmerAgressive(), stopwords);
         log.info("Index initialized");
+
+        return true;
     }
 
     /**
@@ -90,8 +104,10 @@ public class Main {
      * @param topK Max number of top results returned.
      * @return Found results.
      */
-    public static List<Result> search(String query, int topK) {
+    public static List<Result> search(String query, int topK) throws QueryNodeException {
+        log.debug("Executing query \"{}\" with max result count {}.", query, topK);
         if (index == null) {
+            log.warn("No index, can't search.");
             return new ArrayList<>();
         } else {
             index.setTopResultCount(topK);
