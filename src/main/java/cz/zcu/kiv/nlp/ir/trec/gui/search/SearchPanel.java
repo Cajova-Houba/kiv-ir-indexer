@@ -2,6 +2,8 @@ package cz.zcu.kiv.nlp.ir.trec.gui.search;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
+import cz.zcu.kiv.nlp.ir.trec.gui.AbstractGUIPanel;
+import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.gui.search.actions.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,7 @@ import java.util.List;
 /**
  * Panel for search form and result display.
  */
-public class SearchPanel extends JPanel {
+public class SearchPanel extends AbstractGUIPanel {
 
     private static Logger log = LoggerFactory.getLogger(SearchPanel.class);
 
@@ -29,8 +31,8 @@ public class SearchPanel extends JPanel {
 
     private ResultTableDataModel resultModel;
 
-    public SearchPanel() {
-        super(new BorderLayout());
+    public SearchPanel(MainWindow mainWindow) {
+        super(new BorderLayout(), mainWindow);
         setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         addComponents();
@@ -75,13 +77,13 @@ public class SearchPanel extends JPanel {
             @Override
             public void onBeforeSearch() {
                 resetProgressBar();
-                searchButton.setEnabled(false);
+                mainWindow.disableButtons();
             }
 
             @Override
             public void onError(String message) {
                 showErrorMessage(message);
-                searchButton.setEnabled(true);
+                mainWindow.enableButtons();
             }
 
             @Override
@@ -89,7 +91,7 @@ public class SearchPanel extends JPanel {
                 updateFoundCount(results.size());
                 resultModel.clearResults();
                 resultModel.addResults(results);
-                searchButton.setEnabled(true);
+                mainWindow.enableButtons();
             }
         });
         searchForm.add(searchButton);
@@ -110,6 +112,14 @@ public class SearchPanel extends JPanel {
      */
     protected void showErrorMessage(String errorMsg) {
         JOptionPane.showMessageDialog(SearchPanel.this.getParent(), errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void enableButtons() {
+        searchButton.setEnabled(true);
+    }
+
+    public void disableButtons() {
+        searchButton.setEnabled(false);
     }
 
     /**

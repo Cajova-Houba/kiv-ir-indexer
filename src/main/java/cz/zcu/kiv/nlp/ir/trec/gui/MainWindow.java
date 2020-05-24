@@ -11,6 +11,8 @@ import java.awt.*;
  */
 public class MainWindow extends JFrame {
 
+    private AbstractGUIPanel indexManagementPanel, searchPanel;
+
     public MainWindow() {
         setTitle("KIV/IR Indexer");
         setSize(800,800);
@@ -24,7 +26,19 @@ public class MainWindow extends JFrame {
     }
 
     private void addComponents() {
-        add(new IndexManagementPanel(), BorderLayout.EAST);
-        add(new SearchPanel(), BorderLayout.CENTER);
+        indexManagementPanel = new IndexManagementPanel(this);
+        searchPanel = new SearchPanel(this);
+        add(indexManagementPanel, BorderLayout.EAST);
+        add(searchPanel, BorderLayout.CENTER);
+    }
+
+    public void enableButtons() {
+        indexManagementPanel.enableButtons();
+        searchPanel.enableButtons();
+    }
+
+    public void disableButtons() {
+        indexManagementPanel.disableButtons();
+        searchPanel.disableButtons();
     }
 }

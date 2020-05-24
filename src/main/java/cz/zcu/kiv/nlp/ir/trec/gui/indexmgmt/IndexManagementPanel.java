@@ -2,6 +2,8 @@ package cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;
+import cz.zcu.kiv.nlp.ir.trec.gui.AbstractGUIPanel;
+import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexDocumentsFromFile;
 import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexSingleDocument;
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import java.text.SimpleDateFormat;
 /**
  * Panel for managing search index.
  */
-public class IndexManagementPanel extends JPanel {
+public class IndexManagementPanel extends AbstractGUIPanel {
 
     private static Logger log = LoggerFactory.getLogger(IndexManagementPanel.class);
 
@@ -25,10 +27,11 @@ public class IndexManagementPanel extends JPanel {
     private JTextArea documentTextArea;
     private JFormattedTextField documentDateField;
     private JLabel indexedDocumentsCountDisplay;
-    private JButton indexBtn, indexDocumentsFromFile;
+    private JButton indexBtn, indexDocumentsFromFile, saveIndexBtn, loadIndexBtn;
+    private JProgressBar indexFromDocProgressBar;
 
-    public IndexManagementPanel() {
-        super();
+    public IndexManagementPanel(MainWindow mainWindow) {
+        super(mainWindow);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setAlignmentY(Component.TOP_ALIGNMENT);
         setPreferredSize(new Dimension(300,800));
@@ -41,6 +44,8 @@ public class IndexManagementPanel extends JPanel {
     }
 
     private void addComponents() {
+        initProgressBar();
+
         add(createIndexedDocumentsNumDisplay());
         add(createIndexDocumentPanel());
         add(createIndexDataFromFilePanel());
@@ -48,6 +53,15 @@ public class IndexManagementPanel extends JPanel {
         add(createSaveIndexBtn());
         add(createLoadIndexBtn());
         add(Box.createVerticalBox());
+    }
+
+    private void initProgressBar() {
+        indexFromDocProgressBar = new JProgressBar(0, Configuration.getMaxProgress());
+        resetProgressBar();
+    }
+
+    private void resetProgressBar() {
+        indexFromDocProgressBar.setValue(0);
     }
 
     /**
@@ -61,18 +75,27 @@ public class IndexManagementPanel extends JPanel {
         panel.setMaximumSize(new Dimension(300,100));
         panel.setBorder(BorderFactory.createTitledBorder("Index documents from file"));
 
-        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file", getParent()) {
+        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file", getParent(), indexFromDocProgressBar) {
+            @Override
+            public void onBeforeIndex() {
+                mainWindow.disableButtons();
+            }
+
             @Override
             public void onError(String error) {
                 showErrorMessage(error);
+                mainWindow.enableButtons();
             }
 
             @Override
             public void onIndexingFinished() {
                 setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+                mainWindow.enableButtons();
             }
         });
         panel.add(indexDocumentsFromFile);
+        panel.add(indexFromDocProgressBar);
+
 
         return panel;
     }
@@ -122,12 +145,20 @@ public class IndexManagementPanel extends JPanel {
             @Override
             public void onError(String error) {
                 showErrorMessage(error);
+                mainWindow.enableButtons();
             }
 
             @Override
             public void onIndexingFinished() {
                 setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
                 resetNewDocForm();
+                mainWindow.enableButtons();
+            }
+
+            @Override
+            public void onBeforeIndex() {
+                mainWindow.disableButtons();
+                resetProgressBar();
             }
         });
 
@@ -149,7 +180,7 @@ public class IndexManagementPanel extends JPanel {
     }
 
     private JButton createSaveIndexBtn() {
-        JButton btn = new JButton(new AbstractAction("Save index") {
+        loadIndexBtn = new JButton(new AbstractAction("Save index") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 log.info("Saving index to file, waiting for user to choose it ...");
@@ -172,16 +203,18 @@ public class IndexManagementPanel extends JPanel {
                 }
             }
         });
-        btn.setAlignmentX(0.5f);
+        loadIndexBtn.setAlignmentX(0.5f);
 
-        return btn;
+        return loadIndexBtn;
     }
 
     private JButton createLoadIndexBtn() {
-        JButton btn = new JButton(new AbstractAction("Load index") {
+        saveIndexBtn = new JButton(new AbstractAction("Load index") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 log.info("Loading index from file, waiting for user to choose it ...");
+                mainWindow.disableButtons();
+
 
                 final JFileChooser fc = new JFileChooser();
                 int returnVal = fc.showOpenDialog(IndexManagementPanel.this.getParent());
@@ -191,6 +224,7 @@ public class IndexManagementPanel extends JPanel {
                     log.debug("File name: {}", file.getPath());
                     if (!file.exists()) {
                         log.warn("This file does not exist.");
+                        mainWindow.enableButtons();
                         return;
                     }
                     try {
@@ -204,11 +238,12 @@ public class IndexManagementPanel extends JPanel {
                 } else {
                     log.info("User has cancelled the action.");
                 }
+                mainWindow.enableButtons();
             }
         });
-        btn.setAlignmentX(0.5f);
+        saveIndexBtn.setAlignmentX(0.5f);
 
-        return btn;
+        return saveIndexBtn;
     }
 
 
@@ -230,5 +265,19 @@ public class IndexManagementPanel extends JPanel {
 
     public void setIndexedDocumentsCount(int count) {
         indexedDocumentsCountDisplay.setText(Integer.toString(count));
+    }
+
+    public void enableButtons() {
+        indexBtn.setEnabled(true);
+        indexDocumentsFromFile.setEnabled(true);
+        saveIndexBtn.setEnabled(true);
+        loadIndexBtn.setEnabled(true);
+    }
+
+    public void disableButtons() {
+        indexBtn.setEnabled(false);
+        indexDocumentsFromFile.setEnabled(false);
+        saveIndexBtn.setEnabled(false);
+        loadIndexBtn.setEnabled(false);
     }
 }

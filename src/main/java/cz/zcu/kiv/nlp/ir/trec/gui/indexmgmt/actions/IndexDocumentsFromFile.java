@@ -1,6 +1,5 @@
 package cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions;
 
-import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.RPolDocumentReader;
 import org.slf4j.Logger;
@@ -20,11 +19,15 @@ public abstract class IndexDocumentsFromFile extends AbstractAction {
     private static Logger log = LoggerFactory.getLogger(IndexDocumentsFromFile.class);
 
     private Component dialogParent;
+    private JProgressBar progressBar;
 
-    public IndexDocumentsFromFile(String name, Component dialogComponents) {
+    public IndexDocumentsFromFile(String name, Component dialogComponents, JProgressBar indexFromDocProgressBar) {
         super(name);
         this.dialogParent = dialogComponents;
+        progressBar = indexFromDocProgressBar;
     }
+
+    public abstract void onBeforeIndex();
 
     public abstract void onError(String error);
 
@@ -33,6 +36,8 @@ public abstract class IndexDocumentsFromFile extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         log.info("Indexing documents from file, waiting for user to choose it ...");
+
+        onBeforeIndex();
 
         final JFileChooser fc = new JFileChooser();
         int returnVal = fc.showSaveDialog(dialogParent);
@@ -49,21 +54,23 @@ public abstract class IndexDocumentsFromFile extends AbstractAction {
                 List<Document> documents = reader.readFile(file);
                 log.debug("Done.");
 
-                log.debug("Indexing files.");
-                Main.indexDocuments(documents);
-                log.debug("Done");
+                log.debug("Creating task for indexing documents.");
+                IndexDocumentsFromFileTask task = new IndexDocumentsFromFileTask(documents, progressBar) {
+                    @Override
+                    protected void done() {
+                        onIndexingFinished();
+                        super.done();
+                    }
+                };
+                task.execute();
+                log.debug("Waiting for task to finish.");
             } catch (Exception ex) {
                 log.error("Exception while parsing data: ", ex);
                 onError("Error while parsing data: "+ex.getMessage());
-                return;
             }
-
-
         } else {
             log.info("User has cancelled the action.");
+            onIndexingFinished();
         }
-        log.info("Done.");
-
-        onIndexingFinished();
     }
 }

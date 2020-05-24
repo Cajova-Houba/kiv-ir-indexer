@@ -42,9 +42,13 @@ public abstract class IndexSingleDocument extends AbstractAction {
      */
     public abstract void onIndexingFinished();
 
+    public abstract void onBeforeIndex();
+
     @Override
     public void actionPerformed(ActionEvent e) {
         log.info("Indexing document.");
+
+        onBeforeIndex();
 
         String err = "";
         if (documentIdField.getText().isEmpty()) {
