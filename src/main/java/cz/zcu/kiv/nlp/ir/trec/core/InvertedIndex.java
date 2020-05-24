@@ -22,6 +22,11 @@ public class InvertedIndex implements Serializable{
     private Set<String> indexedDocuments;
 
     /**
+     * Doc id -> terms
+     */
+    private Map<String, List<String>> documentTerms;
+
+    /**
      * Comparator which compares postings by document id hash.
      * Must be serializable.
      */
@@ -31,6 +36,7 @@ public class InvertedIndex implements Serializable{
         invertedIndex = new HashMap<>();
         indexedDocuments = new HashSet<>();
         postingComparator = new PostingsComparator();
+        documentTerms = new HashMap<>();
     }
 
     /**
@@ -42,20 +48,22 @@ public class InvertedIndex implements Serializable{
         indexedDocuments.add(documentId);
 
         for(String token : tokens) {
-            // create new set for term postings
+            Map<String, Posting> postingMap;
             if (!invertedIndex.containsKey(token)) {
-                invertedIndex.put(token, new HashMap<>());
-                invertedIndex.get(token).put(documentId, new Posting(documentId));
-
-                // add term occurrence for another doc
-            } else if (!invertedIndex.get(token).containsKey(documentId)) {
-                invertedIndex.get(token).put(documentId, new Posting(documentId));
-
-                // increment term occurrence
+                postingMap = new HashMap<>();
+                invertedIndex.put(token, postingMap);
             } else {
-                invertedIndex.get(token).get(documentId).incrementTermFrequency();
+                postingMap = invertedIndex.get(token);
+            }
+
+            if (!postingMap.containsKey(documentId)) {
+                postingMap.put(documentId, new Posting(documentId));
+            } else {
+                postingMap.get(documentId).incrementTermFrequency();
             }
         }
+
+//        documentTerms.put(documentId, Arrays.asList(tokens));
     }
 
     /**

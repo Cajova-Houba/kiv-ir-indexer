@@ -81,9 +81,14 @@ public class Index implements Indexer, Searcher {
 
     @Override
     public void index(List<Document> documents) {
+        double progress = 0;
+        double progressStep = documents.isEmpty() ? 100 : 100.0 / documents.size();
+        int progLimit = 10;
+        log.debug("Indexing progress: 0");
         for(Document d : documents) {
             String dId = d.getId();
             String dText = d.getText();
+            log.trace("Indexing document {}.", dId);
 
             // check that the document isn't already indexed
             if (invertedIndex.getIndexedDocuments().contains(dId)) {
@@ -91,8 +96,18 @@ public class Index implements Indexer, Searcher {
             }
 
             // tokenize text and index document
+            log.trace("Pre-processing document text.");
             String[] tokens = preprocessor.processText(dText, true, true);
+
+            log.trace("Indexing document text.");
             invertedIndex.indexDocument(tokens, dId);
+            log.trace("Done.");
+
+            progress += progressStep;
+            if (progress > progLimit) {
+                log.debug("Indexing progress: {}.", progLimit);
+                progLimit+=10;
+            }
         }
     }
 
@@ -103,10 +118,6 @@ public class Index implements Indexer, Searcher {
      */
     private List<Result> getResultsForQuery(SearchQueryNode queryRoot) {
         log.debug("Getting results for query.");
-
-        // prepare similarity calculator
-        log.trace("Initializing cosine similarity calculator.");
-        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
 
         // get list of postings to search
         log.trace("Getting list of postings to search.");
@@ -119,11 +130,15 @@ public class Index implements Indexer, Searcher {
         log.trace("Extracting terms from query.");
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
 
+        // prepare similarity calculator
+        log.trace("Initializing cosine similarity calculator.");
+        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex, terms);
+
         // calculate similarity
         log.trace("Calculating similarity.");
         PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
         for(Posting p : postings) {
-            double score = similarityCalculator.calculateScore(terms, p.getDocumentId());
+            double score = similarityCalculator.calculateScore(p.getDocumentId());
             ResultImpl r = new ResultImpl();
             r.setDocumentID(p.getDocumentId());
             r.setScore((float)score);
@@ -137,10 +152,6 @@ public class Index implements Indexer, Searcher {
     private SimilarityCalculatorWithProgress prepareProgressCalculator(SearchQueryNode queryRoot) {
         log.debug("Preparing search query calculator.");
 
-        // prepare similarity calculator
-        log.trace("Initializing cosine similarity calculator.");
-        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
-
         // get list of postings to search
         log.trace("Getting list of postings to search.");
         List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
@@ -153,10 +164,14 @@ public class Index implements Indexer, Searcher {
         log.trace("Extracting terms from query.");
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
 
+        // prepare similarity calculator
+        log.trace("Initializing cosine similarity calculator.");
+        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex, terms);
+
         // calculate similarity
         log.trace("Creating similarity progress calculator.");
         PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
-        return new SimilarityCalculatorWithProgress(postings, resultQueue, similarityCalculator, terms);
+        return new SimilarityCalculatorWithProgress(postings, resultQueue, similarityCalculator);
     }
 
     /**

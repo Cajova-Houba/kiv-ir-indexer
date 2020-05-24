@@ -31,20 +31,14 @@ public class SimilarityCalculatorWithProgress {
      */
     private SimilarityCalculator similarityCalculator;
 
-    /**
-     * Query processed into terms.
-     */
-    private String[] terms;
-
     private double progress;
     private double progressStep;
 
 
-    public SimilarityCalculatorWithProgress(List<Posting> postings, PriorityQueue<Result> resultQueue, SimilarityCalculator similarityCalculator, String[] terms) {
+    public SimilarityCalculatorWithProgress(List<Posting> postings, PriorityQueue<Result> resultQueue, SimilarityCalculator similarityCalculator) {
         this.postings = postings;
         this.resultQueue = resultQueue;
         this.similarityCalculator = similarityCalculator;
-        this.terms = terms;
 
         postingIterator = postings.iterator();
         progress = 0;
@@ -64,7 +58,7 @@ public class SimilarityCalculatorWithProgress {
         }
 
         Posting p = postingIterator.next();
-        double score = similarityCalculator.calculateScore(terms, p.getDocumentId());
+        double score = similarityCalculator.calculateScore(p.getDocumentId());
         ResultImpl r = new ResultImpl();
         r.setDocumentID(p.getDocumentId());
         r.setScore((float)score);

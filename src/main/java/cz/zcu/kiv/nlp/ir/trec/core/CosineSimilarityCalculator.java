@@ -8,17 +8,18 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
 
     private InvertedIndex invertedIndex;
 
-    public CosineSimilarityCalculator(InvertedIndex invertedIndex) {
+    private String[] query;
+
+    private Map<String, Integer> queryTermF = new HashMap<>();
+
+    public CosineSimilarityCalculator(InvertedIndex invertedIndex, String[] query) {
         this.invertedIndex = invertedIndex;
+        this.query = query;
+
+        calculateQueryTF();
     }
 
-    public double calculateScore(String[] query, String documentId) {
-        double cosSim = 0;
-
-        // un-weighted term frequencies for query-query and query-document
-        Map<String, Integer> queryTermF = new HashMap<>();
-
-        // calculate term frequencies for query
+    private void calculateQueryTF() {
         for(String token : query) {
             if (queryTermF.containsKey(token)) {
                 queryTermF.put(token, queryTermF.get(token) +1);
@@ -26,6 +27,10 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
                 queryTermF.put(token, 1);
             }
         }
+    }
+
+    public double calculateScore(String documentId) {
+        double cosSim = 0;
 
         // calculate tf-idf for document
         Map<String, Double> documentTfIdf = calculateDocumentTfIdf(documentId);

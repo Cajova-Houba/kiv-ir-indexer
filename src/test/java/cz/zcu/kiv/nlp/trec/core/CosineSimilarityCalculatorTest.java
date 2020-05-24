@@ -36,7 +36,7 @@ public class CosineSimilarityCalculatorTest {
         documentCount = 3;
 
         // calculator
-        similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
+        similarityCalculator = new CosineSimilarityCalculator(invertedIndex, tokenizedQuery);
     }
 
     @Test
@@ -108,7 +108,7 @@ public class CosineSimilarityCalculatorTest {
     public void testCalculateScoreD1() {
         String documentId = "d1";
         double expectedScore = 0.84671;
-        double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+        double realScore = similarityCalculator.calculateScore(documentId);
         assertEquals("Wrong score for query-document1!", expectedScore, realScore, 0.01);
     }
 
@@ -119,7 +119,7 @@ public class CosineSimilarityCalculatorTest {
     public void testCalculateScoreD2() {
         String documentId = "d2";
         double expectedScore = 0.43976;
-        double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+        double realScore = similarityCalculator.calculateScore(documentId);
         assertEquals("Wrong score for query-document2!", expectedScore, realScore, 0.01);
     }
 
@@ -132,7 +132,7 @@ public class CosineSimilarityCalculatorTest {
 
         double expectedScore = 0;
 
-        double realScore = similarityCalculator.calculateScore(tokenizedQuery, documentId);
+        double realScore = similarityCalculator.calculateScore(documentId);
         assertEquals("Wrong score for query-document3!", expectedScore, realScore, 0.01);
     }
 }

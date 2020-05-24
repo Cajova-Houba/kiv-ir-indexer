@@ -40,7 +40,7 @@ public class TestTrecEval {
             e.printStackTrace();
         }
 
-        Logger.getRootLogger().setLevel(Level.INFO);
+        Logger.getRootLogger().setLevel(Level.DEBUG);
     }
 
     /**
@@ -90,12 +90,14 @@ public class TestTrecEval {
 
         List<String> lines = new ArrayList<>();
 
+        int cnt = 1;
         for (Topic t : topics) {
             //TODO vytvoření dotazu, třída Topic představuje dotaz pro vyhledávání v zaindexovaných dokumentech
             //a obsahuje tři textová pole title, description a narrative. To jak sestavíte dotaz je na Vás a pravděpodobně
             //to ovlivní výsledné vyhledávání - zkuste změnit a uvidíte jaký MAP (Mean Average Precision) dostanete pro jednotlivé
             //kombinace např. pokud budete vyhledávat jen pomocí title (t.getTitle()) nebo jen pomocí description (t.getDescription())
             //nebo jejich kombinací (t.getTitle() + " " + t.getDescription())
+            log.debug(cnt+"/"+topics.size());
             List<Result> resultHits = index.search(t.getTitle() + " " + t.getDescription());
 
             Comparator<Result> cmp = (o1, o2) -> {
@@ -112,6 +114,7 @@ public class TestTrecEval {
             if (resultHits.size() == 0) {
                 lines.add(t.getId() + " Q0 " + "abc" + " " + "99" + " " + 0.0 + " runindex1");
             }
+            cnt++;
         }
         final File outputFile = new File(OUTPUT_DIR + "/results " + SerializedDataHelper.SDF.format(System.currentTimeMillis()) + ".txt");
         IOUtils.saveFile(outputFile, lines);

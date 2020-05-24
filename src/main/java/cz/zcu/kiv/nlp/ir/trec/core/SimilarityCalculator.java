@@ -8,11 +8,10 @@ public interface SimilarityCalculator {
     /**
      * Calculates similarity between query and document.
      *
-     * @param query Query passed as array of tokens (preferably preprocessed).
      * @param documentId Id of document.
      * @return Similarity.
      */
-    double calculateScore(String[] query, String documentId);
+    double calculateScore(String documentId);
 
     /**
      * Calculates document frequency of term.
