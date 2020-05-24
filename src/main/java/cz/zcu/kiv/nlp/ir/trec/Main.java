@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
+import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculatorWithProgress;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
@@ -119,10 +120,37 @@ public class Main {
         log.debug("Executing query \"{}\" with max result count {}.", query, topK);
         if (index == null) {
             log.warn("No index, can't search.");
-            return new ArrayList<>();
+            return Collections.emptyList();
         } else {
             index.setTopResultCount(topK);
             return index.search(query);
         }
+    }
+
+    /**
+     * Performs search and returns results.
+     *
+     * @param query Search query.
+     * @param topK Max number of top results returned.
+     * @return Found results.
+     */
+    public static SimilarityCalculatorWithProgress searchWithProgress(String query, int topK) throws QueryNodeException {
+        log.debug("Executing query \"{}\" with max result count {}, tracking progress.", query, topK);
+        if (index == null) {
+            log.warn("No index, can't search.");
+            return null;
+        } else {
+            index.setTopResultCount(topK);
+            return index.searchWithProgress(query);
+        }
+    }
+
+    public static List<Result> extractTopKResults(PriorityQueue<Result> queue, int k) {
+        if (index == null) {
+            log.warn("No index.");
+            return Collections.emptyList();
+        }
+
+        return index.getTopKResults(queue, k);
     }
 }

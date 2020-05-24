@@ -11,10 +11,7 @@ import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author tigi
@@ -137,6 +134,31 @@ public class Index implements Indexer, Searcher {
         return getTopKResults(resultQueue, topResultCount);
     }
 
+    private SimilarityCalculatorWithProgress prepareProgressCalculator(SearchQueryNode queryRoot) {
+        log.debug("Preparing search query calculator.");
+
+        // prepare similarity calculator
+        log.trace("Initializing cosine similarity calculator.");
+        SimilarityCalculator similarityCalculator = new CosineSimilarityCalculator(invertedIndex);
+
+        // get list of postings to search
+        log.trace("Getting list of postings to search.");
+        List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
+        if(postings.isEmpty()) {
+            log.warn("No postings.");
+            return null;
+        }
+
+        // get list of terms in query
+        log.trace("Extracting terms from query.");
+        String[] terms = queryRoot.getTerms().toArray(new String[0]);
+
+        // calculate similarity
+        log.trace("Creating similarity progress calculator.");
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+        return new SimilarityCalculatorWithProgress(postings, resultQueue, similarityCalculator, terms);
+    }
+
     /**
      * Create result queue with descending comparator and initial capacity.
      * @param initialCapacity Initial capacity.
@@ -153,7 +175,7 @@ public class Index implements Indexer, Searcher {
      * @param k Max number of results to pull from query.
      * @return Results sorted by their score in descending order.
      */
-    private List<Result> getTopKResults(PriorityQueue<Result> queue, int k)  {
+    public List<Result> getTopKResults(PriorityQueue<Result> queue, int k)  {
         List<Result> results = new ArrayList<>();
         int max;
         if (k < 0) {
@@ -171,7 +193,25 @@ public class Index implements Indexer, Searcher {
     }
 
     @Override
-    public List<Result> search(String query) throws QueryNodeException {
+    public List<Result> search(String query) {
+        try {
+            log.debug("Parsing query \"{}\".", query);
+            SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
+            if (rootQuery == null) {
+                log.warn("Null query returned.");
+                return null;
+            }
+            log.debug("Done");
+
+            return getResultsForQuery(rootQuery);
+        } catch (Exception ex) {
+            log.error("Exception while searching the index: ", ex);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public SimilarityCalculatorWithProgress searchWithProgress(String query) throws QueryNodeException {
         log.debug("Parsing query \"{}\".", query);
         SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
         if (rootQuery == null) {
@@ -180,6 +220,6 @@ public class Index implements Indexer, Searcher {
         }
         log.debug("Done");
 
-        return getResultsForQuery(rootQuery);
+        return prepareProgressCalculator(rootQuery);
     }
 }

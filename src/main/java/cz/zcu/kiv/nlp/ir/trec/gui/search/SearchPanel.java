@@ -1,16 +1,16 @@
 package cz.zcu.kiv.nlp.ir.trec.gui.search;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
-import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
+import cz.zcu.kiv.nlp.ir.trec.gui.search.actions.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Panel for search form and result display.
@@ -24,6 +24,8 @@ public class SearchPanel extends JPanel {
     private JTextField queryField;
     private SpinnerNumberModel topResultsModel;
     private JLabel foundDocumentsCount;
+    private JProgressBar progressBar;
+    private JButton searchButton;
 
     private ResultTableDataModel resultModel;
 
@@ -35,8 +37,19 @@ public class SearchPanel extends JPanel {
     }
 
     private void addComponents() {
+        add(createProgressBar(), BorderLayout.SOUTH);
         add(createSearchForm(), BorderLayout.NORTH);
         add(createResultDisplay(), BorderLayout.CENTER);
+    }
+
+    private Component createProgressBar() {
+        progressBar = new JProgressBar(0,Configuration.getMaxProgress());
+        resetProgressBar();
+        return progressBar;
+    }
+
+    private void resetProgressBar() {
+        progressBar.setValue(0);
     }
 
     private JPanel createResultDisplay() {
@@ -58,31 +71,28 @@ public class SearchPanel extends JPanel {
         queryField = new JTextField(20);
         searchForm.add(queryField);
         searchForm.add(new JSpinner(topResultsModel));
-        searchForm.add(new JButton(new AbstractAction("Search") {
+        searchButton = new JButton(new SearchIndex("Search", queryField, topResultsModel, progressBar, this) {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                String query = queryField.getText();
-                log.info("Executing query \"{}\"", query);
-                if (query.isEmpty()) {
-                    log.warn("Query is empty.");
-                    showErrorMessage("No query!");
-                    return;
-                }
-
-                try {
-                    log.debug("Performing search.");
-                    java.util.List<Result> results = Main.search(query, topResultsModel.getNumber().intValue());
-                    log.debug("Done, {} results found.", results.size());
-
-                    updateFoundCount(results.size());
-                    resultModel.clearResults();
-                    resultModel.addResults(results);
-                } catch (Exception ex) {
-                    log.error("Unexpected error while executing the query: ", ex);
-                    showErrorMessage("Unexpected exception occurred while performing search: "+ex.getMessage());
-                }
+            public void onBeforeSearch() {
+                resetProgressBar();
+                searchButton.setEnabled(false);
             }
-        }));
+
+            @Override
+            public void onError(String message) {
+                showErrorMessage(message);
+                searchButton.setEnabled(true);
+            }
+
+            @Override
+            public void onSearchFinished(List<Result> results) {
+                updateFoundCount(results.size());
+                resultModel.clearResults();
+                resultModel.addResults(results);
+                searchButton.setEnabled(true);
+            }
+        });
+        searchForm.add(searchButton);
         return searchForm;
     }
 

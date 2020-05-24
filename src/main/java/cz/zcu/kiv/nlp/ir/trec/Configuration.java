@@ -13,4 +13,6 @@ public class Configuration {
     public static int getMaxTopKResults() {
         return 100;
     }
+
+    public static int getMaxProgress() {return 100;}
 }
