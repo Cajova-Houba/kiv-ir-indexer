@@ -33,6 +33,7 @@ public class CosineSimilarityCalculatorTest {
         invertedIndex.indexDocument(new String[] {"worst","car","auto","insurance"},"d2");
         invertedIndex.indexDocument(new String[] {"completely","irrelevant"},"d3");
         invertedIndex.recalculateTermIdfs();
+        invertedIndex.recalculateDocumentTfIdfs();
 
         documentCount = 3;
 

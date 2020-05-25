@@ -17,6 +17,11 @@ public class Posting implements Serializable{
      */
     private int termFrequency;
 
+    /**
+     * TF-IDF of this term in this document.
+     */
+    private double tfIdf;
+
     public Posting(String documentId) {
         this.documentId = documentId;
         this.termFrequency = 1;
@@ -54,6 +59,19 @@ public class Posting implements Serializable{
     public int documentIdHash() {
         if (documentId == null)  { return 0; }
         else { return documentId.hashCode(); }
+    }
+
+    /**
+     * Re-calculates TF-IDF of this posting. Assumes termFrequency is set correctly.
+     *
+     * @param termIdf IDF of term in this posting.
+     */
+    public void recalculateTfIdf(double termIdf) {
+        tfIdf = termIdf * (1 + Math.log10(termFrequency));
+    }
+
+    public double getTfIdf() {
+        return tfIdf;
     }
 
     @Override

@@ -1,16 +1,13 @@
 package cz.zcu.kiv.nlp.trec.core;
 
-import cz.zcu.kiv.nlp.ir.trec.core.CosineSimilarityCalculator;
 import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
 import cz.zcu.kiv.nlp.ir.trec.core.Posting;
-import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculator;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,6 +45,9 @@ public class InvertedIndexTest {
         invertedIndex.indexDocument(d1,"d1");
         invertedIndex.indexDocument(d2,"d2");
         invertedIndex.indexDocument(d3,"d3");
+
+        invertedIndex.recalculateTermIdfs();
+        invertedIndex.recalculateDocumentTfIdfs();
 
         documentCount = 3;
     }
@@ -120,6 +120,21 @@ public class InvertedIndexTest {
         for (Posting p : postings) {
             assertTrue("Posting contains unexpected document!", documentTermFreq.containsKey(p.getDocumentId()));
             assertEquals("Wrong term frequency of term "+term+" in document "+p.getDocumentId(), documentTermFreq.get(p.getDocumentId()).intValue(), p.getTermFrequency());
+        }
+    }
+
+    @Test
+    public void testGetDocumentTfIdf_d1() {
+        Map<String, Double> expectedTfIdfs = new HashMap<>();
+        expectedTfIdfs.put("car", Math.log10(3 / 2.0) * (1+ Math.log10(1.0)));
+        expectedTfIdfs.put("insurance", Math.log10(3 / 2.0) *(1+  Math.log10(2.0)));
+        expectedTfIdfs.put("auto", Math.log10(3 / 2.0) *  (1+Math.log10(1.0)));
+
+        Map<String, Double> tfIdfs = invertedIndex.getDocumentTfIdf("d1");
+
+        for(Map.Entry<String, Double> entry: expectedTfIdfs.entrySet()) {
+            assertTrue("Missing term "+entry.getKey(), tfIdfs.containsKey(entry.getKey()));
+            assertEquals("Wrong TF-IDF", entry.getValue(), tfIdfs.get(entry.getKey()), 0.001);
         }
     }
 

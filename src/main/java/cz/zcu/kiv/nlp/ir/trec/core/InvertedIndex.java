@@ -77,6 +77,38 @@ public class InvertedIndex implements Serializable{
     }
 
     /**
+     * Recalculates TF-IDF for all terms and documents.
+     * Assumes term IDF was already calculated.
+     */
+    public void recalculateDocumentTfIdfs() {
+        for(String term : invertedIndex.keySet()) {
+            for(Posting p : invertedIndex.get(term).values()) {
+                p.recalculateTfIdf(termIdf.get(term));
+            }
+        }
+    }
+
+    /**
+     * Returns TF-IDF vector for given document.
+     * @param documentId Id of document.
+     * @return term -> TF-IDF map.
+     */
+    public Map<String, Double> getDocumentTfIdf(String documentId) {
+        if (!indexedDocuments.contains(documentId)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Double> docTfIdf = new HashMap<>();
+
+        for(String term : invertedIndex.keySet()) {
+            if (invertedIndex.get(term).containsKey(documentId)) {
+                docTfIdf.put(term, invertedIndex.get(term).get(documentId).getTfIdf());
+            }
+        }
+
+        return docTfIdf;
+    }
+
+    /**
      * Returns number of indexed documents.
      * @return
      */

@@ -52,24 +52,28 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
         double cosSim = 0;
 
 //        log.debug("Getting terms for document");
-        List<String> docTerms = invertedIndex.getTermsFormDocument(documentId);
-
-//        log.debug("Checking match between query and document");
-        if (noTermMatch(docTerms)) {
-            return 0;
-        }
+//        List<String> docTerms = invertedIndex.getTermsFormDocument(documentId);
+//
+////        log.debug("Checking match between query and document");
+//        if (noTermMatch(docTerms)) {
+//            return 0;
+//        }
 
         // calculate tf-idf for document
-//        log.debug("Calculating document TF-IDF");
-        Map<String, Double> documentTfIdf = calculateDocumentTfIdf(docTerms, documentId);
+        log.debug("Calculating document TF-IDF");
+        Map<String, Double> documentTfIdf = invertedIndex.getDocumentTfIdf(documentId);
+
+        log.debug("Normalizing");
+        normalizeVector(documentTfIdf);
 
         // calculate cosine similarity
-//        log.debug("Calculating cosine similarity");
+        log.debug("Calculating cosine similarity");
         for(String token : queryTfIdf.keySet()) {
             if (documentTfIdf.containsKey(token)) {
                 cosSim += documentTfIdf.get(token) * queryTfIdf.get(token);
             }
         }
+        log.debug("Done");
 
         return cosSim;
     }

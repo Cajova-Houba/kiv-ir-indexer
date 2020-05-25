@@ -108,6 +108,9 @@ public class Index implements Indexer, Searcher {
 
         log.debug("Re-calculating term IDF");
         invertedIndex.recalculateTermIdfs();
+
+        log.debug("Re-calculating TF-IDF");
+        invertedIndex.recalculateDocumentTfIdfs();
     }
 
     /**
@@ -149,6 +152,8 @@ public class Index implements Indexer, Searcher {
             if (100.0*docProcessed / postings.size() > progressLevel) {
                 log.debug("{}% of documents processed.", progressLevel);
                 progressLevel +=1;
+                log.debug("haha");
+                throw new RuntimeException("haha exception goes brr");
             }
         }
 
