@@ -62,8 +62,6 @@ public class InvertedIndex implements Serializable{
                 postingMap.get(documentId).incrementTermFrequency();
             }
         }
-
-//        documentTerms.put(documentId, Arrays.asList(tokens));
     }
 
     /**

@@ -4,13 +4,13 @@ import cz.zcu.kiv.nlp.ir.trec.Index;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.DocumentNew;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
-import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
-import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
+import cz.zcu.kiv.nlp.ir.trec.preprocess.*;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,9 +27,17 @@ public class IndexTest {
 
     protected Index index;
 
+    private String[] tokenizedQuery;
+
     @Before
     public void setUp() {
-        index = new Index(new AdvancedTokenizer(), new CzechStemmerAgressive(), new HashSet<>());
+        Tokenizer t = new AdvancedTokenizer();
+        Stemmer s = new CzechStemmerAgressive();
+        Preprocessor p = new Preprocessor(t, s, Collections.emptySet());
+        index = new Index(t, s, new HashSet<>());
+
+        String query = "nejlepsi auto pojisteni";
+        tokenizedQuery = p.processText(query, true, false);
 
         List<Document> documents = Arrays.asList(
                 new DocumentNew("pojisteni auto vozidla",DOC_1_ID),
@@ -42,20 +50,19 @@ public class IndexTest {
 
     @Test
     public void testIdf() {
-        // TODO
         // expected inverted document frequencies for terms in query
-//        double[] expectedIdf = new double[] {
-//                0,
-//                Math.log10(documentCount / 2.0),
-//                Math.log10(documentCount / 2.0)
-//        };
-//
-//        int i = 0;
-//        for(String term : tokenizedQuery) {
-//            double idf = similarityCalculator.idf(term);
-//            assertEquals("Wrong idf for term: "+term, expectedIdf[i], idf, 0.01);
-//            i++;
-//        }
+        double[] expectedIdf = new double[] {
+                0,
+                Math.log10(index.getDocumentCount() / 2.0),
+                Math.log10(index.getDocumentCount() / 2.0)
+        };
+
+        int i = 0;
+        for(String term : tokenizedQuery) {
+            double idf = index.getInvertedIndex().idf(term);
+            assertEquals("Wrong idf for term: "+term, expectedIdf[i], idf, 0.01);
+            i++;
+        }
     }
 
 
