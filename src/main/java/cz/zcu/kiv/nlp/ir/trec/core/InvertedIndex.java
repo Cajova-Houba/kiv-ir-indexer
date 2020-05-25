@@ -27,6 +27,13 @@ public class InvertedIndex implements Serializable{
     private Map<String, Double> termIdf;
 
     /**
+     * Size of TF-IDF vectors.
+     *
+     * docId -> size
+     */
+    private Map<String, Double> documentTfIdfNorms;
+
+    /**
      * Comparator which compares postings by document id hash.
      * Must be serializable.
      */
@@ -37,6 +44,7 @@ public class InvertedIndex implements Serializable{
         indexedDocuments = new HashSet<>();
         postingComparator = new PostingsComparator();
         termIdf = new HashMap<>();
+        documentTfIdfNorms = new HashMap<>();
     }
 
     /**
@@ -84,8 +92,50 @@ public class InvertedIndex implements Serializable{
         for(String term : invertedIndex.keySet()) {
             for(Posting p : invertedIndex.get(term).values()) {
                 p.recalculateTfIdf(termIdf.get(term));
+
+                // add tf-idf of current term and document to document norm
+                if (!documentTfIdfNorms.containsKey(p.getDocumentId())) {
+                    documentTfIdfNorms.put(p.getDocumentId(), 0.0);
+                }
+
+                double currentTfIdf = documentTfIdfNorms.get(p.getDocumentId());
+                documentTfIdfNorms.put(p.getDocumentId(),currentTfIdf + p.getTfIdf()*p.getTfIdf());
             }
         }
+
+        // sqrt(sumsqr) for each document
+        for(Map.Entry<String, Double> entry : documentTfIdfNorms.entrySet()) {
+            double tfIdfNorm = entry.getValue();
+            tfIdfNorm = Math.sqrt(tfIdfNorm);
+            documentTfIdfNorms.put(entry.getKey(), tfIdfNorm);
+        }
+    }
+
+    /**
+     * Returns tf-idf for given term-document combination.
+     * @param term Term.
+     * @param docId Id of document.
+     * @return TF-IDF for given document-term or 0 if such combination is not indexed.
+     */
+    public double getTfIdfOfTermInDocument(String term, String docId) {
+        if (invertedIndex.containsKey(term) && invertedIndex.get(term).containsKey(docId)) {
+            return invertedIndex.get(term).get(docId).getTfIdf();
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Returns the
+     * @param docId
+     * @return
+     */
+    public double getTfIdfNormForDocument(String docId) {
+        if (!documentTfIdfNorms.containsKey(docId)) {
+            return 0.0;
+        }
+
+        return documentTfIdfNorms.get(docId);
     }
 
     /**
@@ -98,6 +148,7 @@ public class InvertedIndex implements Serializable{
             return Collections.emptyMap();
         }
         Map<String, Double> docTfIdf = new HashMap<>();
+
 
         for(String term : invertedIndex.keySet()) {
             if (invertedIndex.get(term).containsKey(documentId)) {

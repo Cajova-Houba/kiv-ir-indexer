@@ -1,15 +1,9 @@
 package cz.zcu.kiv.nlp.ir.trec.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CosineSimilarityCalculator implements SimilarityCalculator {
-
-    private static Logger log = LoggerFactory.getLogger(CosineSimilarityCalculator.class);
 
     private InvertedIndex invertedIndex;
 
@@ -51,63 +45,14 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     public double calculateScore(String documentId) {
         double cosSim = 0;
 
-//        log.debug("Getting terms for document");
-//        List<String> docTerms = invertedIndex.getTermsFormDocument(documentId);
-//
-////        log.debug("Checking match between query and document");
-//        if (noTermMatch(docTerms)) {
-//            return 0;
-//        }
-
-        // calculate tf-idf for document
-        log.debug("Calculating document TF-IDF");
-        Map<String, Double> documentTfIdf = invertedIndex.getDocumentTfIdf(documentId);
-
-        log.debug("Normalizing");
-        normalizeVector(documentTfIdf);
-
-        // calculate cosine similarity
-        log.debug("Calculating cosine similarity");
+        double tfIdfNorm = invertedIndex.getTfIdfNormForDocument(documentId);
         for(String token : queryTfIdf.keySet()) {
-            if (documentTfIdf.containsKey(token)) {
-                cosSim += documentTfIdf.get(token) * queryTfIdf.get(token);
-            }
-        }
-        log.debug("Done");
-
-        return cosSim;
-    }
-
-    /**
-     * Checks if there is at least one same term in query and document.
-     *
-     * @return True if there is not same term in query and document.
-     */
-    private boolean noTermMatch(List<String> documentTerms) {
-        for(String queryTerm : query) {
-            if (documentTerms.contains(queryTerm)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Calculates TF-IDF for all terms in document.
-     * @param documentId
-     * @return Map of term -> normalized TF-IDF
-     */
-    private Map<String, Double> calculateDocumentTfIdf(List<String> documentTerms, String documentId) {
-        Map<String, Double> tfIdfMap = new HashMap<>();
-        for(String term : documentTerms) {
-            double tf = ltf(term, documentId);
-            double tfIdf = tf * invertedIndex.idf(term);
-            tfIdfMap.put(term, tfIdf);
+            double docTermTfIdf = invertedIndex.getTfIdfOfTermInDocument(token, documentId);
+            cosSim += (docTermTfIdf * queryTfIdf.get(token));
         }
 
-        normalizeVector(tfIdfMap);
-
-        return tfIdfMap;
+        // query tf-idf vector is already normalized so no need to divide by 1
+        return cosSim / tfIdfNorm;
     }
 
     /**
