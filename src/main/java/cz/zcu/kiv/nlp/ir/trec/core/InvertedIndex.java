@@ -22,9 +22,9 @@ public class InvertedIndex implements Serializable{
     private Set<String> indexedDocuments;
 
     /**
-     * Doc id -> terms
+     * Inverted document frequencies of terms.
      */
-    private Map<String, List<String>> documentTerms;
+    private Map<String, Double> termIdf;
 
     /**
      * Comparator which compares postings by document id hash.
@@ -36,7 +36,7 @@ public class InvertedIndex implements Serializable{
         invertedIndex = new HashMap<>();
         indexedDocuments = new HashSet<>();
         postingComparator = new PostingsComparator();
-        documentTerms = new HashMap<>();
+        termIdf = new HashMap<>();
     }
 
     /**
@@ -64,6 +64,18 @@ public class InvertedIndex implements Serializable{
         }
 
 //        documentTerms.put(documentId, Arrays.asList(tokens));
+    }
+
+    /**
+     * Recalculates inversed DF of terms.
+     */
+    public void recalculateTermIdfs() {
+        for(String term : invertedIndex.keySet()) {
+            double idf = invertedIndex.get(term).size();
+            idf = Math.log10(getDocumentCount() / idf);
+
+            termIdf.put(term, idf);
+        }
     }
 
     /**
@@ -149,6 +161,21 @@ public class InvertedIndex implements Serializable{
      */
     public List<Posting> getPostingsForQuery(SearchQueryNode rootQuery) {
         return getPostingsForQueryRec(rootQuery, false);
+    }
+
+    /**
+     * Returns IDF of given term.
+     *
+     * @param term Term.
+     * @return IDF of given term or 0 if the term is not indexed.
+     */
+    // TODO: test and use
+    public double idf(String term) {
+        if (termIdf.containsKey(term)) {
+            return termIdf.get(term);
+        } else {
+            return 0;
+        }
     }
 
     /**

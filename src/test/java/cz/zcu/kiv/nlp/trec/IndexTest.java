@@ -40,6 +40,24 @@ public class IndexTest {
         index.index(documents);
     }
 
+    @Test
+    public void testIdf() {
+        // TODO
+        // expected inverted document frequencies for terms in query
+//        double[] expectedIdf = new double[] {
+//                0,
+//                Math.log10(documentCount / 2.0),
+//                Math.log10(documentCount / 2.0)
+//        };
+//
+//        int i = 0;
+//        for(String term : tokenizedQuery) {
+//            double idf = similarityCalculator.idf(term);
+//            assertEquals("Wrong idf for term: "+term, expectedIdf[i], idf, 0.01);
+//            i++;
+//        }
+    }
+
 
     /**
      * Simple search with one term.

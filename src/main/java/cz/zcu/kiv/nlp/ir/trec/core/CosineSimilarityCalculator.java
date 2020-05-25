@@ -10,16 +10,17 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
 
     private String[] query;
 
-    private Map<String, Integer> queryTermF = new HashMap<>();
+    private Map<String, Double> queryTfIdf = new HashMap<>();
 
     public CosineSimilarityCalculator(InvertedIndex invertedIndex, String[] query) {
         this.invertedIndex = invertedIndex;
         this.query = query;
 
-        calculateQueryTF();
+        calculateQueryTFIDF();
     }
 
-    private void calculateQueryTF() {
+    private void calculateQueryTFIDF() {
+        Map<String, Integer> queryTermF = new HashMap<>();
         for(String token : query) {
             if (queryTermF.containsKey(token)) {
                 queryTermF.put(token, queryTermF.get(token) +1);
@@ -27,6 +28,19 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
                 queryTermF.put(token, 1);
             }
         }
+
+        for (String token : queryTermF.keySet()) {
+            double termIdf = invertedIndex.idf(token);
+
+            // if idf for given term is = 0 it means it's not in the index
+            // skip it
+            if (Math.abs(termIdf - 0) < 0.01) {
+                continue;
+            }
+            queryTfIdf.put(token, (1 + Math.log10(queryTermF.get(token)))*termIdf);
+        }
+        normalizeVector(queryTfIdf);
+
     }
 
     public double calculateScore(String documentId) {
@@ -40,20 +54,6 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
 
         // calculate tf-idf for document
         Map<String, Double> documentTfIdf = calculateDocumentTfIdf(docTerms, documentId);
-
-        // calculate and normalize tf-idf for query
-        Map<String, Double> queryTfIdf = new HashMap<>();
-        for (String token : queryTermF.keySet()) {
-            double termIdf = idf(token);
-
-            // if idf for given term is = 0 it means it's not in the index
-            // skip it
-            if (Math.abs(termIdf - 0) < 0.01) {
-                continue;
-            }
-            queryTfIdf.put(token, (1 + Math.log10(queryTermF.get(token)))*termIdf);
-        }
-        normalizeVector(queryTfIdf);
 
         // calculate cosine similarity
         for(String token : queryTfIdf.keySet()) {
@@ -88,7 +88,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
         Map<String, Double> tfIdfMap = new HashMap<>();
         for(String term : documentTerms) {
             double tf = ltf(term, documentId);
-            double tfIdf = tf * idf(term);
+            double tfIdf = tf * invertedIndex.idf(term);
             tfIdfMap.put(term, tfIdf);
         }
 
@@ -118,12 +118,7 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     public double idf(String term) {
-        double idf = df(term);
-        if (idf != 0)  {
-            idf = Math.log10(getDocumentCount() / idf);
-        }
-
-        return idf;
+        return invertedIndex.idf(term);
     }
 
     public double ntf(String term, String documentId) {

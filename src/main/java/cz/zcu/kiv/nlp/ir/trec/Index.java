@@ -88,7 +88,6 @@ public class Index implements Indexer, Searcher {
         for(Document d : documents) {
             String dId = d.getId();
             String dText = d.getText();
-//            log.trace("Indexing document {}.", dId);
 
             // check that the document isn't already indexed
             if (invertedIndex.getIndexedDocuments().contains(dId)) {
@@ -96,12 +95,9 @@ public class Index implements Indexer, Searcher {
             }
 
             // tokenize text and index document
-//            log.trace("Pre-processing document text.");
             String[] tokens = preprocessor.processText(dText, true, true);
 
-//            log.trace("Indexing document text.");
             invertedIndex.indexDocument(tokens, dId);
-//            log.trace("Done.");
 
             progress += progressStep;
             if (progress > progLimit) {
@@ -109,6 +105,9 @@ public class Index implements Indexer, Searcher {
                 progLimit+=10;
             }
         }
+
+        log.debug("Re-calculating term IDF");
+        invertedIndex.recalculateTermIdfs();
     }
 
     /**

@@ -32,6 +32,7 @@ public class CosineSimilarityCalculatorTest {
         invertedIndex.indexDocument(new String[] {"car","insurance","auto","insurance"},"d1");
         invertedIndex.indexDocument(new String[] {"worst","car","auto","insurance"},"d2");
         invertedIndex.indexDocument(new String[] {"completely","irrelevant"},"d3");
+        invertedIndex.recalculateTermIdfs();
 
         documentCount = 3;
 
@@ -80,23 +81,6 @@ public class CosineSimilarityCalculatorTest {
         for(String term : tokenizedQuery) {
             double df = similarityCalculator.df(term);
             assertEquals("Wrong df for term: "+term, expectedDf[i], df, 0.01);
-            i++;
-        }
-    }
-
-    @Test
-    public void testIdf() {
-        // expected inverted document frequencies for terms in query
-        double[] expectedIdf = new double[] {
-                0,
-                Math.log10(documentCount / 2.0),
-                Math.log10(documentCount / 2.0)
-        };
-
-        int i = 0;
-        for(String term : tokenizedQuery) {
-            double idf = similarityCalculator.idf(term);
-            assertEquals("Wrong idf for term: "+term, expectedIdf[i], idf, 0.01);
             i++;
         }
     }
