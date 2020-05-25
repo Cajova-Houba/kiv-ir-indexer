@@ -32,8 +32,14 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     public double calculateScore(String documentId) {
         double cosSim = 0;
 
+        List<String> docTerms = invertedIndex.getTermsFormDocument(documentId);
+
+        if (noTermMatch(docTerms)) {
+            return 0;
+        }
+
         // calculate tf-idf for document
-        Map<String, Double> documentTfIdf = calculateDocumentTfIdf(documentId);
+        Map<String, Double> documentTfIdf = calculateDocumentTfIdf(docTerms, documentId);
 
         // calculate and normalize tf-idf for query
         Map<String, Double> queryTfIdf = new HashMap<>();
@@ -60,14 +66,27 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     }
 
     /**
+     * Checks if there is at least one same term in query and document.
+     *
+     * @return True if there is not same term in query and document.
+     */
+    private boolean noTermMatch(List<String> documentTerms) {
+        for(String queryTerm : query) {
+            if (documentTerms.contains(queryTerm)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Calculates TF-IDF for all terms in document.
      * @param documentId
      * @return Map of term -> normalized TF-IDF
      */
-    private Map<String, Double> calculateDocumentTfIdf(String documentId) {
-        List<String> terms = invertedIndex.getTermsFormDocument(documentId);
+    private Map<String, Double> calculateDocumentTfIdf(List<String> documentTerms, String documentId) {
         Map<String, Double> tfIdfMap = new HashMap<>();
-        for(String term : terms) {
+        for(String term : documentTerms) {
             double tf = ltf(term, documentId);
             double tfIdf = tf * idf(term);
             tfIdfMap.put(term, tfIdf);

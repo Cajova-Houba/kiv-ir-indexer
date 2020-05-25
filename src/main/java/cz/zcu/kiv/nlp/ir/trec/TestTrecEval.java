@@ -40,7 +40,7 @@ public class TestTrecEval {
             e.printStackTrace();
         }
 
-        Logger.getRootLogger().setLevel(Level.DEBUG);
+        Logger.getRootLogger().setLevel(Level.TRACE);
     }
 
     /**
