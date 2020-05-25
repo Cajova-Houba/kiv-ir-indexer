@@ -1,10 +1,15 @@
 package cz.zcu.kiv.nlp.ir.trec.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CosineSimilarityCalculator implements SimilarityCalculator {
+
+    private static Logger log = LoggerFactory.getLogger(CosineSimilarityCalculator.class);
 
     private InvertedIndex invertedIndex;
 
@@ -46,16 +51,20 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
     public double calculateScore(String documentId) {
         double cosSim = 0;
 
+//        log.debug("Getting terms for document");
         List<String> docTerms = invertedIndex.getTermsFormDocument(documentId);
 
+//        log.debug("Checking match between query and document");
         if (noTermMatch(docTerms)) {
             return 0;
         }
 
         // calculate tf-idf for document
+//        log.debug("Calculating document TF-IDF");
         Map<String, Double> documentTfIdf = calculateDocumentTfIdf(docTerms, documentId);
 
         // calculate cosine similarity
+//        log.debug("Calculating cosine similarity");
         for(String token : queryTfIdf.keySet()) {
             if (documentTfIdf.containsKey(token)) {
                 cosSim += documentTfIdf.get(token) * queryTfIdf.get(token);

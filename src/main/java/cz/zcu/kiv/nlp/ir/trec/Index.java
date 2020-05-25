@@ -136,12 +136,20 @@ public class Index implements Indexer, Searcher {
         // calculate similarity
         log.trace("Calculating similarity.");
         PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+        int progressLevel = 0;
+        int docProcessed = 0;
         for(Posting p : postings) {
             double score = similarityCalculator.calculateScore(p.getDocumentId());
             ResultImpl r = new ResultImpl();
             r.setDocumentID(p.getDocumentId());
             r.setScore((float)score);
             resultQueue.add(r);
+
+            docProcessed++;
+            if (100.0*docProcessed / postings.size() > progressLevel) {
+                log.debug("{}% of documents processed.", progressLevel);
+                progressLevel +=1;
+            }
         }
 
         log.trace("Fetching results.");

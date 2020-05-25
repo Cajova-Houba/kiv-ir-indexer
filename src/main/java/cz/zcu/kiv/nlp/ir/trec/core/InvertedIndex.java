@@ -136,10 +136,8 @@ public class InvertedIndex implements Serializable{
         } else {
             List<String> terms = new ArrayList<>();
             for(String term : invertedIndex.keySet()) {
-                for(String docId: invertedIndex.get(term).keySet()) {
-                    if (docId.equals(documentId)) {
-                        terms.add(term);
-                    }
+                if (invertedIndex.get(term).keySet().contains(documentId)) {
+                    terms.add(term);
                 }
             }
 
@@ -167,7 +165,6 @@ public class InvertedIndex implements Serializable{
      * @param term Term.
      * @return IDF of given term or 0 if the term is not indexed.
      */
-    // TODO: test and use
     public double idf(String term) {
         if (termIdf.containsKey(term)) {
             return termIdf.get(term);
