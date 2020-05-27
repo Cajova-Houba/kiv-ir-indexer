@@ -6,7 +6,7 @@ import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
-import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
+import cz.zcu.kiv.nlp.ir.trec.preprocess.EnglishStemmer;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class Main {
     /**
      * Name of the stopwords file in resource directory.
      */
-    public static final String STOP_WORDS_FILE_NAME = "stopwords-czech-1.txt";
+    public static final String STOP_WORDS_FILE_NAME = "stopwords-english.txt";
 
     public static Index index;
     private static Logger log = LoggerFactory.getLogger(Main.class);
@@ -57,7 +57,7 @@ public class Main {
         }
         log.info("Done");
 
-        index = new Index(new AdvancedTokenizer(), new CzechStemmerAgressive(), stopwords);
+        index = new Index(new AdvancedTokenizer(), new EnglishStemmer(), stopwords);
         log.info("Index initialized");
 
         return true;

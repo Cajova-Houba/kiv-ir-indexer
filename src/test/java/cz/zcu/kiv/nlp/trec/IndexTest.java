@@ -33,11 +33,11 @@ public class IndexTest {
     public void setUp() {
         Tokenizer t = new AdvancedTokenizer();
         Stemmer s = new CzechStemmerAgressive();
-        Preprocessor p = new Preprocessor(t, s, Collections.emptySet());
-        index = new Index(t, s, new HashSet<>());
+        Preprocessor p = new Preprocessor(t, s, Collections.emptySet(), true, false);
+        index = new Index(t, s, new HashSet<>(), true, false);
 
         String query = "nejlepsi auto pojisteni";
-        tokenizedQuery = p.processText(query, true, false);
+        tokenizedQuery = p.processText(query);
 
         List<Document> documents = Arrays.asList(
                 new DocumentNew("pojisteni auto vozidla",DOC_1_ID),

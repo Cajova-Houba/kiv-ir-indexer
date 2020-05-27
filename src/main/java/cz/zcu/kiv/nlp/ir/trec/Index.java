@@ -46,7 +46,11 @@ public class Index implements Indexer, Searcher {
     private int topResultCount;
 
     public Index(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords) {
-        this.preprocessor = new Preprocessor(tokenizer, stemmer, stopwords);
+        this(tokenizer, stemmer, stopwords, true, true);
+    }
+
+    public Index(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords, boolean useStemmer, boolean useStopWords) {
+        this.preprocessor = new Preprocessor(tokenizer, stemmer, stopwords, useStemmer, useStopWords);
         invertedIndex = new InvertedIndex();
         topResultCount = DEF_TOP_RESULT_COUNT;
     }
@@ -98,7 +102,7 @@ public class Index implements Indexer, Searcher {
 
             // tokenize text and index document
             log.debug("Pre-processing");
-            String[] tokens = preprocessor.processText(dText, true, true);
+            String[] tokens = preprocessor.processText(dText);
             log.debug("Done");
 
             log.debug("Indexing");

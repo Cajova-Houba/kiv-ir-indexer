@@ -1,5 +1,6 @@
 package cz.zcu.kiv.nlp.ir.trec.preprocess;
 
+import java.text.Normalizer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -27,10 +28,18 @@ public class Preprocessor {
      */
     private Set<String> stopwords;
 
-    public Preprocessor(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords) {
+    private boolean useStemmer, useStopWords;
+
+    public Preprocessor(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords, boolean useStemmer, boolean useStopWords) {
         this.tokenizer = tokenizer;
         this.stemmer = stemmer;
         this.stopwords = stopwords;
+        this.useStemmer = useStemmer;
+        this.useStopWords = useStopWords;
+    }
+
+    public Preprocessor(Tokenizer tokenizer, Stemmer stemmer, Set<String> stopwords) {
+        this(tokenizer, stemmer, stopwords, true, true);
     }
 
     /**
@@ -39,20 +48,17 @@ public class Preprocessor {
      * @return Processed term.
      */
     public String processTerm(String term) {
-        String t = term.toLowerCase();
-        t = removeAccents(t);
-        return stemmer.stem(t);
+        String[] tokens = processText(term);
+        return tokens.length > 0 ? tokens[0] : "";
     }
 
     /**
      * Process input text.
      *
      * @param text Text to be processed.
-     * @param useStemmer If true, stemmer will be used after tokenization.
-     * @param useStopwords If true, stop words (before stemming) will be excluded from returned token array.
      * @return Processed text returned as array of tokens.
      */
-    public String[] processText(String text, boolean useStemmer, boolean useStopwords) {
+    public String[] processText(String text) {
         if (tokenizer == null) {
             return new String[0];
         }
@@ -64,7 +70,7 @@ public class Preprocessor {
         List<String> tokenizedText = tokenizer.tokenize(text);
 
         // stopwords
-        if (useStopwords && stopwords != null) {
+        if (useStopWords && stopwords != null) {
             Iterator<String> tokenIt = tokenizedText.iterator();
             while(tokenIt.hasNext()) {
                 if (stopwords.contains(tokenIt.next())) { tokenIt.remove(); }
@@ -75,7 +81,7 @@ public class Preprocessor {
         // stemmer
         if (useStemmer && stemmer != null) {
             for (int i = 0; i < tokens.length; i++) {
-                tokens[i] = processTerm(tokens[i]);
+                tokens[i] = stemmer.stem(tokens[i]);
             }
         }
 
@@ -83,9 +89,13 @@ public class Preprocessor {
     }
 
     private String removeAccents(String text) {
+        text =  text == null ? "" : Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+        // InCombiningDiacriticalMarks won't remove everything
         for (int i = 0; i < withDiacritics.length(); i++) {
             text = text.replaceAll("" + withDiacritics.charAt(i), "" + withoutDiacritics.charAt(i));
         }
+
         return text;
     }
 }
