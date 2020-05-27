@@ -1,7 +1,8 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.core.InvertedIndex;
-import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculatorWithProgress;
+import cz.zcu.kiv.nlp.ir.trec.core.SearchMode;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.RetrievalWithProgress;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
@@ -105,32 +106,14 @@ public class Main {
      * @param topK Max number of top results returned.
      * @return Found results.
      */
-    public static List<Result> search(String query, int topK) throws QueryNodeException {
-        log.debug("Executing query \"{}\" with max result count {}.", query, topK);
-        if (index == null) {
-            log.warn("No index, can't search.");
-            return Collections.emptyList();
-        } else {
-            index.setTopResultCount(topK);
-            return index.search(query);
-        }
-    }
-
-    /**
-     * Performs search and returns results.
-     *
-     * @param query Search query.
-     * @param topK Max number of top results returned.
-     * @return Found results.
-     */
-    public static SimilarityCalculatorWithProgress searchWithProgress(String query, int topK) throws QueryNodeException {
+    public static RetrievalWithProgress searchWithProgress(String query, SearchMode searchMode, int topK) throws QueryNodeException {
         log.debug("Executing query \"{}\" with max result count {}, tracking progress.", query, topK);
         if (index == null) {
             log.warn("No index, can't search.");
             return null;
         } else {
             index.setTopResultCount(topK);
-            return index.searchWithProgress(query);
+            return index.searchWithProgress(query, searchMode);
         }
     }
 

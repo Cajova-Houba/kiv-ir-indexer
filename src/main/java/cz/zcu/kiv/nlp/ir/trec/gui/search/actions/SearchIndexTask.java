@@ -2,7 +2,8 @@ package cz.zcu.kiv.nlp.ir.trec.gui.search.actions;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;
-import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculatorWithProgress;
+import cz.zcu.kiv.nlp.ir.trec.core.SearchMode;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.RetrievalWithProgress;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -16,11 +17,13 @@ public class SearchIndexTask extends SwingWorker<List, Integer> {
     private String query;
     private int topK;
     private JProgressBar progressBar;
+    private SearchMode searchMode;
 
-    public SearchIndexTask(String query, int topK, JProgressBar progressBar) {
+    public SearchIndexTask(String query, int topK, SearchMode searchMode, JProgressBar progressBar) {
         this.query = query;
         this.topK = topK;
         this.progressBar = progressBar;
+        this.searchMode = searchMode;
     }
 
     @Override
@@ -31,19 +34,19 @@ public class SearchIndexTask extends SwingWorker<List, Integer> {
 
     @Override
     protected List doInBackground() throws Exception {
-        SimilarityCalculatorWithProgress calculatorWithProgress = Main.searchWithProgress(query, topK);
-        if (calculatorWithProgress == null) {
+        RetrievalWithProgress retrievalWithProgress = Main.searchWithProgress(query, searchMode, topK);
+        if (retrievalWithProgress == null) {
             publish(Configuration.getMaxProgress());
             return Collections.emptyList();
         }
 
-        while(!calculatorWithProgress.done()) {
-            calculatorWithProgress.oneStep();
-            publish(calculatorWithProgress.getProgress());
+        while(!retrievalWithProgress.done()) {
+            retrievalWithProgress.oneStep();
+            publish(retrievalWithProgress.getProgress());
         }
 
         publish(Configuration.getMaxProgress());
 
-        return Main.extractTopKResults(calculatorWithProgress.getResultQueue(), topK);
+        return Main.extractTopKResults(retrievalWithProgress.getResultQueue(), topK);
     }
 }

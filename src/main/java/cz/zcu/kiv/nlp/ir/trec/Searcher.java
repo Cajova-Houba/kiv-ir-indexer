@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
-import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculatorWithProgress;
+import cz.zcu.kiv.nlp.ir.trec.core.SearchMode;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.RetrievalWithProgress;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 
@@ -19,13 +20,21 @@ import java.util.List;
 public interface Searcher {
     List<Result> search(String query);
 
+    /**
+     * Perform search in given search mode.
+     *
+     * @param query
+     * @param searchMode
+     * @return
+     */
+    List<Result> search(String query, SearchMode searchMode) throws QueryNodeException;
 
     /**
-     * Returns a similarity calculator which allows tracking progress.
+     * Returns a retrieval object which allows tracking progress.
      *
      * Results needs to be extracted afterwards.
      *
      * @param query
      */
-    SimilarityCalculatorWithProgress searchWithProgress(String query) throws QueryNodeException;
+    RetrievalWithProgress searchWithProgress(String query, SearchMode searchMode) throws QueryNodeException;
 }

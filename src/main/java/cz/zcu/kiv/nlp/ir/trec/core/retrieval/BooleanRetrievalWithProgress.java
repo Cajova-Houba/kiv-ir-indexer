@@ -1,6 +1,7 @@
-package cz.zcu.kiv.nlp.ir.trec.core;
+package cz.zcu.kiv.nlp.ir.trec.core.retrieval;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
+import cz.zcu.kiv.nlp.ir.trec.core.Posting;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
 
@@ -9,11 +10,9 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 /**
- * Allows to calculate similarity step-by-step so that progress can be tracked.
- *
- * New instance should be created every time similarity is to eb calculated.
+ * Boolean retrieval with trackable progress.
  */
-public class SimilarityCalculatorWithProgress {
+public class BooleanRetrievalWithProgress implements RetrievalWithProgress {
 
     /**
      * Postings to process.
@@ -26,19 +25,12 @@ public class SimilarityCalculatorWithProgress {
      */
     private PriorityQueue<Result> resultQueue;
 
-    /**
-     * Similarity calculator to be used.
-     */
-    private SimilarityCalculator similarityCalculator;
-
     private double progress;
     private double progressStep;
 
-
-    public SimilarityCalculatorWithProgress(List<Posting> postings, PriorityQueue<Result> resultQueue, SimilarityCalculator similarityCalculator) {
+    public BooleanRetrievalWithProgress(List<Posting> postings, PriorityQueue<Result> resultQueue) {
         this.postings = postings;
         this.resultQueue = resultQueue;
-        this.similarityCalculator = similarityCalculator;
 
         postingIterator = postings.iterator();
         progress = 0;
@@ -49,39 +41,32 @@ public class SimilarityCalculatorWithProgress {
         }
     }
 
-    /**
-     * Performs one step of similarity calculation
-     */
+    @Override
     public void oneStep() {
         if (done()) {
             return;
         }
 
         Posting p = postingIterator.next();
-        double score = similarityCalculator.calculateScore(p.getDocumentId());
+
         ResultImpl r = new ResultImpl();
         r.setDocumentID(p.getDocumentId());
-        r.setScore((float)score);
+        r.setScore(1f);
         resultQueue.add(r);
         progress += progressStep;
     }
 
-    /**
-     * Returns true when all of the postings were processed.
-     * @return
-     */
+    @Override
     public boolean done() {
         return !postingIterator.hasNext();
     }
 
-    /**
-     * Progress of similarity calculation.
-     * @return Number in range [0;100].
-     */
+    @Override
     public int getProgress() {
         return (int)progress;
     }
 
+    @Override
     public PriorityQueue<Result> getResultQueue() {
         return resultQueue;
     }

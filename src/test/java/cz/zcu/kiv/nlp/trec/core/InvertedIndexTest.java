@@ -5,6 +5,7 @@ import cz.zcu.kiv.nlp.ir.trec.core.Posting;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,62 @@ public class InvertedIndexTest {
         invertedIndex.recalculateDocumentTfIdfs();
 
         documentCount = 3;
+    }
+
+    /**
+     * Test AND intersection of two posting lists.
+     *
+     * [d1,d2,d3] AND [d2,d3,d4] = [d2,d3]
+     */
+    @Test
+    public void testAndIntersect() {
+        List<Posting> p1 = new ArrayList<>();
+        p1.add(new Posting("d1"));
+        p1.add(new Posting("d2"));
+        p1.add(new Posting("d3"));
+        List<Posting> p2 = new ArrayList<>();
+        p2.add(new Posting("d2"));
+        p2.add(new Posting("d3"));
+        p2.add(new Posting("d4"));
+        List<Posting> expectedResult = new ArrayList<>();
+        expectedResult.add(new Posting("d2"));
+        expectedResult.add(new Posting("d3"));
+
+        List<Posting> res = invertedIndex.andIntersect(p1, p2);
+
+        assertEquals("Wrong number of results returned!", expectedResult.size(), res.size());
+        for(Posting expectedP : expectedResult) {
+            assertTrue(expectedP+" not returned!", res.contains(expectedP));
+        }
+    }
+
+    /**
+     * Test OR intersection of two posting lists.
+     *
+     * [d1,d2,d3] AND [d2,d3,d4] = [d1,d2,d3,d4]
+     */
+    @Test
+    public void testOrIntersect() {
+        List<Posting> p1 = new ArrayList<>();
+        p1.add(new Posting("d1"));
+        p1.add(new Posting("d2"));
+        p1.add(new Posting("d3"));
+        List<Posting> p2 = new ArrayList<>();
+        p2.add(new Posting("d2"));
+        p2.add(new Posting("d3"));
+        p2.add(new Posting("d4"));
+        List<Posting> expectedResult = new ArrayList<>();
+        expectedResult.add(new Posting("d1"));
+        expectedResult.add(new Posting("d2"));
+        expectedResult.add(new Posting("d3"));
+        expectedResult.add(new Posting("d4"));
+
+        List<Posting> res = invertedIndex.orIntersect(p1, p2);
+
+        assertEquals("Wrong number of results returned!", expectedResult.size(), res.size());
+        for(Posting expectedP : expectedResult) {
+            assertTrue(expectedP+" not returned!", res.contains(expectedP));
+        }
     }
 
     @Test

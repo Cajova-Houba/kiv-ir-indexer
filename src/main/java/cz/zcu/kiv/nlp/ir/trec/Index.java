@@ -1,6 +1,9 @@
 package cz.zcu.kiv.nlp.ir.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.core.*;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.BooleanRetrievalWithProgress;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.CosineSimilarityWithProgress;
+import cz.zcu.kiv.nlp.ir.trec.core.retrieval.RetrievalWithProgress;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
@@ -55,8 +58,98 @@ public class Index implements Indexer, Searcher {
         topResultCount = DEF_TOP_RESULT_COUNT;
     }
 
-    public int getTopResultCount() {
-        return topResultCount;
+    @Override
+    public List<Result> search(String query) {
+        try {
+            log.debug("Parsing query \"{}\".", query);
+            SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
+            if (rootQuery == null) {
+                log.warn("Null query returned.");
+                return null;
+            }
+            log.debug("Done");
+
+            return rankedRetrieval(rootQuery);
+        } catch (QueryNodeException ex) {
+            log.error("Query node exception while searching the index: ", ex);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<Result> search(String query, SearchMode searchMode) throws QueryNodeException {
+        log.debug("Parsing query \"{}\".", query);
+        SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query, searchMode);
+        if (rootQuery == null) {
+            log.warn("Null query returned.");
+            return null;
+        }
+        log.debug("Done");
+
+        log.debug("Preparing retrieval with progress");
+        switch (searchMode) {
+            case BOOLEAN:
+                return booleanRetrieval(rootQuery);
+            case RANKED:
+                return rankedRetrieval(rootQuery);
+            default:
+                throw new RuntimeException("Unsupported search mode: "+searchMode);
+        }
+    }
+
+    @Override
+    public RetrievalWithProgress searchWithProgress(String query, SearchMode searchMode) throws QueryNodeException {
+        log.debug("Parsing query \"{}\".", query);
+        SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query, searchMode);
+        if (rootQuery == null) {
+            log.warn("Null query returned.");
+            return null;
+        }
+        log.debug("Done");
+
+        log.debug("Preparing retrieval with progress");
+        switch (searchMode) {
+            case BOOLEAN:
+                return prepareBooleanRetrievalWithProgress(rootQuery);
+            case RANKED:
+                return prepareRankedRetrievalWithProgress(rootQuery);
+            default:
+                throw new RuntimeException("Unsupported search mode: "+searchMode);
+        }
+    }
+
+    @Override
+    public void index(List<Document> documents) {
+        double progress = 0;
+        double progressStep = documents.isEmpty() ? 100 : 100.0 / documents.size();
+        int progLimit = 10;
+        log.debug("Indexing progress: 0");
+        for(Document d : documents) {
+            String dId = d.getId();
+            String dText = d.getText();
+
+            // check that the document isn't already indexed
+            if (invertedIndex.getIndexedDocuments().contains(dId)) {
+                throw new RuntimeException("Document with id "+dId+" is already indexed!");
+            }
+
+            // tokenize text and index document
+            String[] tokens = preprocessor.processText(dText);
+
+            invertedIndex.indexDocument(tokens, dId);
+
+            progress += progressStep;
+            if (progress > progLimit) {
+                log.debug("Indexing progress: {}.", progLimit);
+                progLimit+=10;
+            }
+        }
+
+        log.debug("Re-calculating term IDF");
+        invertedIndex.recalculateTermIdfs();
+
+        log.debug("Re-calculating TF-IDF");
+        invertedIndex.recalculateDocumentTfIdfs();
     }
 
     public void setTopResultCount(int topResultCount) {
@@ -83,52 +176,49 @@ public class Index implements Indexer, Searcher {
         }
     }
 
-    @Override
-    public void index(List<Document> documents) {
-        double progress = 0;
-        double progressStep = documents.isEmpty() ? 100 : 100.0 / documents.size();
-        int progLimit = 10;
-        log.debug("Indexing progress: 0");
-        for(Document d : documents) {
-            String dId = d.getId();
-            String dText = d.getText();
+    /**
+     * Internal method which performs boolean retrieval search.
+     * @param rootQuery
+     * @return
+     */
+    private List<Result> booleanRetrieval(SearchQueryNode rootQuery) {
+        log.debug("Getting results for query.");
 
-            // check that the document isn't already indexed
-            log.debug("Checking whether document exists");
-            if (invertedIndex.getIndexedDocuments().contains(dId)) {
-                throw new RuntimeException("Document with id "+dId+" is already indexed!");
-            }
-            log.debug("Done");
+        // get list of postings to search
+        log.trace("Getting list of postings to search.");
+        List<Posting> postings = invertedIndex.getPostingsForQuery(rootQuery);
+        if(postings.isEmpty()) {
+            return new ArrayList<>();
+        }
 
-            // tokenize text and index document
-            log.debug("Pre-processing");
-            String[] tokens = preprocessor.processText(dText);
-            log.debug("Done");
+        // calculate similarity
+        log.trace("Calculating similarity.");
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+        int progressLevel = 0;
+        int docProcessed = 0;
+        for(Posting p : postings) {
+            ResultImpl r = new ResultImpl();
+            r.setDocumentID(p.getDocumentId());
+            r.setScore(1f);
+            resultQueue.add(r);
 
-            log.debug("Indexing");
-            invertedIndex.indexDocument(tokens, dId);
-            log.debug("Done");
-
-            progress += progressStep;
-            if (progress > progLimit) {
-                log.debug("Indexing progress: {}.", progLimit);
-                progLimit+=10;
+            docProcessed++;
+            if (100.0*docProcessed / postings.size() > progressLevel) {
+                log.debug("{}% of documents processed.", progressLevel);
+                progressLevel += 10;
             }
         }
 
-        log.debug("Re-calculating term IDF");
-        invertedIndex.recalculateTermIdfs();
-
-        log.debug("Re-calculating TF-IDF");
-        invertedIndex.recalculateDocumentTfIdfs();
+        log.trace("Fetching results.");
+        return getTopKResults(resultQueue, topResultCount);
     }
 
     /**
-     * Internal method which performs search using query tree.
-     * @param queryRoot Root of query interpreted as a tree.
+     * Internal method which performs ranked retrieval search.
+     * @param queryRoot Root of term query.
      * @return List of results.
      */
-    private List<Result> getResultsForQuery(SearchQueryNode queryRoot) {
+    private List<Result> rankedRetrieval(SearchQueryNode queryRoot) {
         log.debug("Getting results for query.");
 
         // get list of postings to search
@@ -169,7 +259,23 @@ public class Index implements Indexer, Searcher {
         return getTopKResults(resultQueue, topResultCount);
     }
 
-    private SimilarityCalculatorWithProgress prepareProgressCalculator(SearchQueryNode queryRoot) {
+    private BooleanRetrievalWithProgress prepareBooleanRetrievalWithProgress(SearchQueryNode queryRoot) {
+        log.debug("Getting results for boolean query.");
+
+        log.trace("Getting list of postings to search.");
+        List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
+        if(postings.isEmpty()) {
+            log.warn("No postings.");
+            return null;
+        }
+
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+
+        log.debug("Creating boolean retrieval object.");
+        return new BooleanRetrievalWithProgress(postings, resultQueue);
+    }
+
+    private CosineSimilarityWithProgress prepareRankedRetrievalWithProgress(SearchQueryNode queryRoot) {
         log.debug("Preparing search query calculator.");
 
         // get list of postings to search
@@ -191,7 +297,7 @@ public class Index implements Indexer, Searcher {
         // calculate similarity
         log.trace("Creating similarity progress calculator.");
         PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
-        return new SimilarityCalculatorWithProgress(postings, resultQueue, similarityCalculator);
+        return new CosineSimilarityWithProgress(postings, resultQueue, similarityCalculator);
     }
 
     /**
@@ -225,36 +331,5 @@ public class Index implements Indexer, Searcher {
         }
 
         return results;
-    }
-
-    @Override
-    public List<Result> search(String query) {
-        try {
-            log.debug("Parsing query \"{}\".", query);
-            SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
-            if (rootQuery == null) {
-                log.warn("Null query returned.");
-                return null;
-            }
-            log.debug("Done");
-
-            return getResultsForQuery(rootQuery);
-        } catch (Exception ex) {
-            log.error("Exception while searching the index: ", ex);
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public SimilarityCalculatorWithProgress searchWithProgress(String query) throws QueryNodeException {
-        log.debug("Parsing query \"{}\".", query);
-        SearchQueryNode rootQuery = new QueryParser(preprocessor).parseQuery(query);
-        if (rootQuery == null) {
-            log.warn("Null query returned.");
-            return null;
-        }
-        log.debug("Done");
-
-        return prepareProgressCalculator(rootQuery);
     }
 }

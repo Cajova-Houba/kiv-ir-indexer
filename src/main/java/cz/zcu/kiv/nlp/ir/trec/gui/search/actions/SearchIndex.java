@@ -16,17 +16,13 @@ public abstract class SearchIndex extends AbstractAction {
 
     private static Logger log = LoggerFactory.getLogger(SearchIndex.class);
 
-    private JTextField queryField;
-    private SpinnerNumberModel topResultsModel;
     private JProgressBar progressBar;
     private SearchPanel parentComponent;
 
     private SearchIndexTask task;
 
-    public SearchIndex(String name, JTextField queryField, SpinnerNumberModel topResultsModel, JProgressBar progressBar, SearchPanel parentComponent) {
+    public SearchIndex(String name, JProgressBar progressBar, SearchPanel parentComponent) {
         super(name);
-        this.queryField = queryField;
-        this.topResultsModel = topResultsModel;
         this.progressBar = progressBar;
         this.parentComponent = parentComponent;
     }
@@ -41,7 +37,7 @@ public abstract class SearchIndex extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         onBeforeSearch();
 
-        String query = queryField.getText();
+        String query = parentComponent.getQuery();
         log.info("Executing query \"{}\"", query);
         if (query.isEmpty()) {
             log.warn("Query is empty.");
@@ -52,7 +48,7 @@ public abstract class SearchIndex extends AbstractAction {
         try {
             log.debug("Starting background task.");
 
-            task = new SearchIndexTask(query, topResultsModel.getNumber().intValue(), progressBar) {
+            task = new SearchIndexTask(query, parentComponent.getTopK(), parentComponent.getSearchMode(), progressBar) {
                 @Override
                 protected void done() {
                     try {

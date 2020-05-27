@@ -10,6 +10,10 @@ import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Parser for search queries (especially boolean).
  */
@@ -39,27 +43,85 @@ public class QueryParser {
     }
 
     /**
-     * Parse string query and create SearchQuery object.
-     * @param query Query to be parsed.
-     * @return Parsed query.
+     * Parses query for RANKED retrieval.
+     * @param query String query to be parsed.
+     * @return Query node.
+     * @throws QueryNodeException
      */
     public SearchQueryNode parseQuery(String query) throws QueryNodeException {
-        log.debug("Preparing to parse query \"{}\" with default field \"{}\".", query, defaultField);
-        Query q =  parser.parse(query, "");
+        return this.parseQuery(query, SearchMode.RANKED);
+    }
+
+    /**
+     * Parse string query and create SearchQuery object.
+     * @param query Query to be parsed.
+     * @param searchMode Search mode used to interpret query.
+     * @return Parsed query.
+     */
+    public SearchQueryNode parseQuery(String query, SearchMode searchMode) throws QueryNodeException {
+        log.debug("Preparing to parse query \"{}\" with default field \"{}\". Search mode: {}.", query, defaultField, searchMode);
+
         SearchQueryNode root = new SearchQueryNode();
-        if (q.getClass() == TermQuery.class) {
-            log.trace("Term query detected.");
-            root.setTerm(true);
-            root.setText(preprocessor.processTerm(((TermQuery)q).getTerm().text()));
-        } else if (q.getClass() == BooleanQuery.class) {
-            log.trace("Boolean query detected.");
-            log.trace("Creating query tree for boolean query.");
-            createQueryTree(q, root);
-        } else {
-            log.trace("Unknown query type {}.", q.getClass());
-            throw new RuntimeException("Query type "+q.getClass()+" is not supported!");
+        switch (searchMode) {
+            case RANKED:
+                log.debug("Paring query for ranked retrieval.");
+                parseNormalQuery(query, root);
+                break;
+
+            case BOOLEAN:
+                log.debug("Parsing query for boolean retrieval.");
+                parseBooleanQuery(query, root);
+                break;
+
+            default:
+                throw new RuntimeException("Unsupported search mode: "+searchMode);
         }
         return root;
+    }
+
+    /**
+     * Tokenizes query and creates structure of OR (token1 token2 ...)
+     * @param query Query to be parsed.
+     * @param root Root query node.
+     */
+    private void parseNormalQuery(String query, SearchQueryNode root) {
+        root.setTerm(false);
+
+        // tokenize query and create one query node for each term
+        // then put them under one OR operator so that all necessary
+        // Postings are collected
+        String[] terms = preprocessor.processText(query);
+        List<SearchQueryNode> termNodes = new ArrayList<>(terms.length);
+        for(String queryTerm : terms) {
+            SearchQueryNode t = new SearchQueryNode();
+            t.setTerm(true);
+            t.setText(queryTerm);
+            termNodes.add(t);
+        }
+
+        root.getChildren().put(BooleanClause.Occur.SHOULD, termNodes);
+    }
+
+    private void parseBooleanQuery(String query, SearchQueryNode root) throws QueryNodeException {
+        Query q =  parser.parse(query, "");
+        createQueryTree(q, root);
+
+        checkAloneNot(root, query);
+    }
+
+    /**
+     * Checks whether the boolean query is in form of NOT [term] and throws exception if it is.
+     * @param root Root of the query.
+     * @param query Query to be used in error message.
+     */
+    private void checkAloneNot(SearchQueryNode root, String query) {
+        if (!root.isTerm() && root.getChildren().size() == 1) {
+            Map.Entry<BooleanClause.Occur, List<SearchQueryNode>> entry = root.getChildren().entrySet().iterator().next();
+            BooleanClause.Occur occur = entry.getKey();
+            if (occur.equals(BooleanClause.Occur.MUST_NOT) && entry.getValue().size() < 2 && entry.getValue().get(0).isTerm()) {
+                throw new RuntimeException("Alone operator NOT is not allowed, query: "+query);
+            }
+        }
     }
 
     /**

@@ -199,6 +199,7 @@ public class InvertedIndex implements Serializable{
 
     /**
      * Returns postings list for a term. The list will be sorted by document id hash in ascending order.
+     *
      * @param term Term.
      * @return
      */
@@ -210,21 +211,6 @@ public class InvertedIndex implements Serializable{
             postings.sort(postingComparator);
 
             return postings;
-        }
-    }
-
-    public List<String> getTermsFormDocument(String documentId) {
-        if (!indexedDocuments.contains(documentId)) {
-            return Collections.emptyList();
-        } else {
-            List<String> terms = new ArrayList<>();
-            for(String term : invertedIndex.keySet()) {
-                if (invertedIndex.get(term).keySet().contains(documentId)) {
-                    terms.add(term);
-                }
-            }
-
-            return terms;
         }
     }
 
@@ -269,10 +255,12 @@ public class InvertedIndex implements Serializable{
                 // return posting of all but this term
                 String notTerm = node.getText();
 
-                // first get all unique postings
+                // first get all unique postings except the notTerm
                 Set<Posting> allPostings = new HashSet<>();
                 for(String term : invertedIndex.keySet()) {
-                    allPostings.addAll(invertedIndex.get(term).values());
+                    if (!term.equals(notTerm)) {
+                        allPostings.addAll(invertedIndex.get(term).values());
+                    }
                 }
 
                 // now remove all postings which are relevant to notTerm
@@ -316,7 +304,7 @@ public class InvertedIndex implements Serializable{
                         // NOT
                     case MUST_NOT:
                         for(SearchQueryNode child : childQuery) {
-                            res = notIntersect(child, res, getPostingsForQueryRec(child, true));
+                            res = notIntersect(res, getPostingsForQueryRec(child, true));
                         }
                         break;
                 }
@@ -330,12 +318,12 @@ public class InvertedIndex implements Serializable{
      * Intersect two lists so that none of them will contain postings of given term.
      * Basically: resultList = sourceList \ index[notTem].
      *
-     * @param node Node which should contain notTerm.
      * @param postingList1 Result list.
-     * @param postingList2 Source list.
+     * @param postingList2 Source list. It is expected that this list already contains NOT [term] postings
+     *                     so the actual intersection is AND (NOT [term]).
      * @return List of postings.
      */
-    public List<Posting> notIntersect(SearchQueryNode node, List<Posting> postingList1, List<Posting> postingList2) {
+    public List<Posting> notIntersect(List<Posting> postingList1, List<Posting> postingList2) {
         if (postingList1.isEmpty() && postingList2.isEmpty()) {
             return new ArrayList<>();
         } else if (postingList2.isEmpty()) {

@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.ir.trec.gui.search;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
+import cz.zcu.kiv.nlp.ir.trec.core.SearchMode;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.AbstractGUIPanel;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
@@ -28,6 +29,8 @@ public class SearchPanel extends AbstractGUIPanel {
     private JLabel foundDocumentsCount;
     private JProgressBar progressBar;
     private JButton searchButton;
+
+    private ComboBoxModel<SearchMode> searchModeSelection;
 
     private ResultTableDataModel resultModel;
 
@@ -71,9 +74,10 @@ public class SearchPanel extends AbstractGUIPanel {
         JPanel searchForm = new JPanel(new FlowLayout());
         prepareSpinnerModel();
         queryField = new JTextField(20);
+        searchForm.add(createSearchModeSelection());
         searchForm.add(queryField);
         searchForm.add(new JSpinner(topResultsModel));
-        searchButton = new JButton(new SearchIndex("Search", queryField, topResultsModel, progressBar, this) {
+        searchButton = new JButton(new SearchIndex("Search", progressBar, this) {
             @Override
             public void onBeforeSearch() {
                 resetProgressBar();
@@ -96,6 +100,14 @@ public class SearchPanel extends AbstractGUIPanel {
         });
         searchForm.add(searchButton);
         return searchForm;
+    }
+
+    private Component createSearchModeSelection() {
+        searchModeSelection = new DefaultComboBoxModel<>(SearchMode.values());
+        searchModeSelection.setSelectedItem(SearchMode.BOOLEAN);
+        JComboBox<SearchMode> comboBox = new JComboBox<>(searchModeSelection);
+        comboBox.setRenderer((list, value, index, isSelected, cellHasFocus) -> new JLabel(value.name));
+        return comboBox;
     }
 
     private void prepareSpinnerModel() {
@@ -121,6 +133,19 @@ public class SearchPanel extends AbstractGUIPanel {
     public void disableButtons() {
         searchButton.setEnabled(false);
     }
+
+    public String getQuery() {
+        return queryField.getText();
+    }
+
+    public int getTopK() {
+        return topResultsModel.getNumber().intValue();
+    }
+
+    public SearchMode getSearchMode() {
+        return (SearchMode) searchModeSelection.getSelectedItem();
+    }
+
 
     /**
      * Custom model for result table.

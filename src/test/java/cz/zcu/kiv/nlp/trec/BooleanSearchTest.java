@@ -1,6 +1,7 @@
 package cz.zcu.kiv.nlp.trec;
 
 import cz.zcu.kiv.nlp.ir.trec.Index;
+import cz.zcu.kiv.nlp.ir.trec.core.SearchMode;
 import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.DocumentNew;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
@@ -19,7 +20,7 @@ import static org.junit.Assert.*;
 /**
  * Test cases for indexer.
  */
-public class IndexTest {
+public class BooleanSearchTest {
 
     public static final String DOC_1_ID = "d1";
     public static final String DOC_2_ID = "d2";
@@ -65,12 +66,11 @@ public class IndexTest {
         }
     }
 
-
     /**
      * Simple search with one term.
      */
     @Test
-    public void testSimpleSearch() throws QueryNodeException {
+    public void testSimpleSearch() {
         String query = "auto";
         int expResCount = 2;
 
@@ -89,7 +89,7 @@ public class IndexTest {
         String query = "auto AND pojisteni";
         int expResCount = 2;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_2_ID));
@@ -105,13 +105,13 @@ public class IndexTest {
         String query2 = "auto OR nejhorsi";
         int expResCount = 2;
 
-        List<Result> results = index.search(query1);
+        List<Result> results = index.search(query1, SearchMode.BOOLEAN);
         assertEquals("wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
         checkResultsScoreNotNanOrZero(results);
 
-        results = index.search(query2);
+        results = index.search(query2, SearchMode.BOOLEAN);
         assertEquals("wrong number of results returned for query 2!", expResCount, results.size() );
         assertTrue("First document not returned for query 2!", checkResultsContainDocument(results, DOC_1_ID));
         assertTrue("Second document not returned for query 2!", checkResultsContainDocument(results, DOC_2_ID));
@@ -121,12 +121,12 @@ public class IndexTest {
     /**
      * Test simple NOT.
      */
-    @Test
-    public void testSimpleNotSearch() throws QueryNodeException {
+    @Test(expected = RuntimeException.class)
+    public void testNotSearch_aloneNot1() throws QueryNodeException {
         String query = "NOT auto";
         int expResCount = 1;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
         checkResultsScoreNotNanOrZero(results);
@@ -137,7 +137,7 @@ public class IndexTest {
         String query = "NOT auto NOT pojisteni";
         int expResCount = 1;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
         checkResultsScoreNotNanOrZero(results);
@@ -148,8 +148,19 @@ public class IndexTest {
         String query = "NOT auto NOT pojisteni NOT uplne";
         int expResCount = 0;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("wrong number of results returned!", expResCount, results.size() );
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    @Test
+    public void testNotSearch3() throws QueryNodeException {
+        String query = "NOT (auto AND  pojisteni)";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
         checkResultsScoreNotNanOrZero(results);
     }
 
@@ -158,7 +169,7 @@ public class IndexTest {
         String query = "(NOT vozidlo) AND (NOT irelevantni)";
         int expResCount = 1;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
         checkResultsScoreNotNanOrZero(results);
@@ -169,9 +180,32 @@ public class IndexTest {
         String query = "((NOT vozidlo) AND (NOT irelevantni) OR  (pojisteni AND nejhorsi))";
         int expResCount = 1;
 
-        List<Result> results = index.search(query);
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_2_ID));
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    @Test
+    public void testComplexSearch3() throws QueryNodeException {
+        String query = "(NOT auto) AND (irelevantni OR vozidlo)";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    @Test
+    public void testComplexSearch4() throws QueryNodeException {
+        String query = "((NOT auto) AND irelevantni) OR vozidlo";
+        int expResCount = 2;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        assertTrue("Second document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         checkResultsScoreNotNanOrZero(results);
     }
 
@@ -181,7 +215,7 @@ public class IndexTest {
      */
     private void checkResultsScoreNotNanOrZero(List<Result> results) {
         for(Result r : results) {
-            assertFalse("Resutl "+r+" has NaN score!", Double.isNaN(r.getScore()));
+            assertFalse("Result "+r+" has NaN score!", Double.isNaN(r.getScore()));
         }
     }
 
