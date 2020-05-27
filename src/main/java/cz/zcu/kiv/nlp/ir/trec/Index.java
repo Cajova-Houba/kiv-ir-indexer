@@ -90,14 +90,20 @@ public class Index implements Indexer, Searcher {
             String dText = d.getText();
 
             // check that the document isn't already indexed
+            log.debug("Checking whether document exists");
             if (invertedIndex.getIndexedDocuments().contains(dId)) {
                 throw new RuntimeException("Document with id "+dId+" is already indexed!");
             }
+            log.debug("Done");
 
             // tokenize text and index document
+            log.debug("Pre-processing");
             String[] tokens = preprocessor.processText(dText, true, true);
+            log.debug("Done");
 
+            log.debug("Indexing");
             invertedIndex.indexDocument(tokens, dId);
+            log.debug("Done");
 
             progress += progressStep;
             if (progress > progLimit) {

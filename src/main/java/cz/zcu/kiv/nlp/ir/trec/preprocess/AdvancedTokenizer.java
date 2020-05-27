@@ -14,7 +14,7 @@ public class AdvancedTokenizer implements Tokenizer {
     public static final String wordsOnlyRegex = "([a-z][a-z0-9]*)";
 
 
-    public String[] tokenize(String text) {
+    public List<String> tokenize(String text) {
 
 
         Pattern pattern = Pattern.compile(wordsOnlyRegex);
@@ -28,6 +28,6 @@ public class AdvancedTokenizer implements Tokenizer {
             words.add(token);
         }
 
-        return words.toArray(new String[0]);
+        return words;
     }
 }

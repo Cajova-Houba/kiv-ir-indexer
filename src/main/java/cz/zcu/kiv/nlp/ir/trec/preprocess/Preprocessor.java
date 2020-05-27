@@ -1,6 +1,8 @@
 package cz.zcu.kiv.nlp.ir.trec.preprocess;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class for preprocessing queries and document texts.
@@ -59,7 +61,7 @@ public class Preprocessor {
         text = removeAccents(text);
 
         // tokenize
-        List<String> tokenizedText = new ArrayList<String>(Arrays.asList(tokenizer.tokenize(text)));
+        List<String> tokenizedText = tokenizer.tokenize(text);
 
         // stopwords
         if (useStopwords && stopwords != null) {
