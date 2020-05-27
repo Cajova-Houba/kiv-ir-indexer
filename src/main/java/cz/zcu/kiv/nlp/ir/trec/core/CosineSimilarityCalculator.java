@@ -47,8 +47,8 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
 
         double tfIdfNorm = invertedIndex.getTfIdfNormForDocument(documentId);
         for(String token : queryTfIdf.keySet()) {
-            double docTermTfIdf = invertedIndex.getTfIdfOfTermInDocument(token, documentId);
-            cosSim += (docTermTfIdf * queryTfIdf.get(token));
+            // relative value, the query term TF-IDF is 1
+            cosSim += invertedIndex.getTfIdfOfTermInDocument(token, documentId);
         }
 
         // query tf-idf vector is already normalized so no need to divide by 1

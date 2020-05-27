@@ -87,23 +87,23 @@ public class CosineSimilarityCalculatorTest {
     }
 
     /**
-     * Calculate cosine similarity between D1 and query.
+     * Calculate relative cosine similarity between D1 and query.
      */
     @Test
     public void testCalculateScoreD1() {
         String documentId = "d1";
-        double expectedScore = 0.84671;
+        double expectedScore = 1.197433761433455;
         double realScore = similarityCalculator.calculateScore(documentId);
         assertEquals("Wrong score for query-document1!", expectedScore, realScore, 0.01);
     }
 
     /**
-     * Calculate cosine similarity between D2 and query.
+     * Calculate relative cosine similarity between D2 and query.
      */
     @Test
     public void testCalculateScoreD2() {
         String documentId = "d2";
-        double expectedScore = 0.43976;
+        double expectedScore = 0.6219267648071095;
         double realScore = similarityCalculator.calculateScore(documentId);
         assertEquals("Wrong score for query-document2!", expectedScore, realScore, 0.01);
     }
