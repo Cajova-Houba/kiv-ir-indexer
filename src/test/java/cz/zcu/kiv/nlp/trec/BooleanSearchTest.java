@@ -144,6 +144,17 @@ public class BooleanSearchTest {
     }
 
     @Test
+    public void testNotSearch5() throws QueryNodeException {
+        String query = "NOT vozidlo NOT pojisteni";
+        int expResCount = 1;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    @Test
     public void testNotSearch2() throws QueryNodeException {
         String query = "NOT auto NOT pojisteni NOT uplne";
         int expResCount = 0;
@@ -161,6 +172,42 @@ public class BooleanSearchTest {
         List<Result> results = index.search(query, SearchMode.BOOLEAN);
         assertEquals("Wrong number of results returned!", expResCount, results.size() );
         assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    @Test
+    public void testNotSearch4() throws QueryNodeException {
+        String query = "vozidlo NOT (auto AND  pojisteni)";
+        int expResCount = 2;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
+        checkResultsScoreNotNanOrZero(results);
+    }
+
+    /**
+     * vozidlo ... d1
+     * auto ... d1, d2
+     * pojisteni ... d1, d2
+     *
+     * auto or pojisteni ... d1, d2
+     * not () ... d3
+     *
+     * => d1, d3
+     *
+     * @throws QueryNodeException
+     */
+    @Test
+    public void testNotSearch6() throws QueryNodeException {
+        String query = "vozidlo NOT (auto OR pojisteni)";
+        int expResCount = 2;
+
+        List<Result> results = index.search(query, SearchMode.BOOLEAN);
+        assertEquals("Wrong number of results returned!", expResCount, results.size() );
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_3_ID));
+        assertTrue("First document not returned!", checkResultsContainDocument(results, DOC_1_ID));
         checkResultsScoreNotNanOrZero(results);
     }
 

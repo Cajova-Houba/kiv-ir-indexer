@@ -289,15 +289,31 @@ public class InvertedIndex implements Serializable{
 
                     // AND
                     case MUST:
-                        for(SearchQueryNode child : childQuery) {
-                            res = andIntersect(res, getPostingsForQueryRec(child, false));
+                        if (notClause) {
+                            // not(a and b ... z) => not(a) OR not(b) ... not(z)
+                            for(SearchQueryNode child : childQuery) {
+                                res = orIntersect(res, getPostingsForQueryRec(child, true));
+                            }
+                        } else {
+                            // standard and operation
+                            for(SearchQueryNode child : childQuery) {
+                                res = andIntersect(res, getPostingsForQueryRec(child, false));
+                            }
                         }
                         break;
 
                     // OR
                     case SHOULD:
-                        for(SearchQueryNode child : childQuery) {
-                            res = orIntersect(res, getPostingsForQueryRec(child, false));
+                        if (notClause) {
+                            // not(a or b ... z) => not(a) and not(b) ... not(z)
+                            for(SearchQueryNode child : childQuery) {
+                                res = andIntersect(res, getPostingsForQueryRec(child, true));
+                            }
+                        } else {
+                            // standard or operation
+                            for(SearchQueryNode child : childQuery) {
+                                res = orIntersect(res, getPostingsForQueryRec(child, false));
+                            }
                         }
                         break;
 
