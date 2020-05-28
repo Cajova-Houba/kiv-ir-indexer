@@ -152,6 +152,22 @@ public class Index implements Indexer, Searcher {
         invertedIndex.recalculateDocumentTfIdfs();
     }
 
+    @Override
+    public void index(Document document) {
+        String dId = document.getId();
+        String dText = document.getText();
+
+        // check that the document isn't already indexed
+        if (invertedIndex.getIndexedDocuments().contains(dId)) {
+            throw new RuntimeException("Document with id "+dId+" is already indexed!");
+        }
+
+        // tokenize text and index document
+        String[] tokens = preprocessor.processText(dText);
+
+        invertedIndex.indexDocument(tokens, dId);
+    }
+
     public void setTopResultCount(int topResultCount) {
         this.topResultCount = topResultCount;
     }

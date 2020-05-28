@@ -22,4 +22,10 @@ public interface Indexer {
      * @param documents list dokumentů
      */
     void index(List<Document> documents);
+
+    /**
+     * Index one document and do NOT re-calculate TF-IDF
+     * @param document
+     */
+    void index(Document document);
 }

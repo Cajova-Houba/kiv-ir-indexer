@@ -3,6 +3,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{gensymb}
+\graphicspath{{./img/}}
 
 \begin{document}
 	\title{Semestrální práce z předmětu KIV/IR}
@@ -35,12 +37,22 @@
 	 
 	Tento způsob ukládání je značně neekonomický, protože většina hodnot v matici je 0 a ukládat gigabyty nul není žádoucí. Řešením je tzv. invertovaný index, což je struktura udržující seznam termů a pro každý term, seznam dokumentů, ve kterých se daný term vyskytuje -- tzv. postings list. Výhodou invertovaného indexu oproti incidenční matici je mimo jiné také možnost uložit počet výskytů termu v dokumentu, čehož jsem v práci využil při počítání TF-IDF vah.
 	
+	\subsubsection{Dokument}
+	Kromě výskytů termů v dokumentu jsou také uložena jeho metadata. Základními metadaty, které vycházejí s poskytnutého rozhraní, jsou ID, text, titulek a datum. Protože jsem pracoval s komentáři ze stránky Reddit.com\footnote{https://old.reddit.com/r/politics/}, ve kterých jeden dokument představoval jeden komentář k příspěvku, přidal jsem k metadatům i skóre (suma souhlasných a nesouhlasných reakcí) a přezdívku autora komentáře. Rozhraní reprezentující metadata dokumentu je zobrazeno na obrázku \ref{fig:document-uml}.
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.3\linewidth]{document-uml}
+		\caption{UML diagram rohzraní reprezentující dokument}
+		\label{fig:document-uml}
+	\end{figure}
+	
 	\subsubsection{TF-IDF váhy}
 	Na dokument je, v rámci, indexu nahlíženo jako na množinu výskytů termů a konkrétní pozice termu v dokumentu není zohledněna. Tento přístup se nazývá \textit{bag of words model} a je založen na předpokladu, že dva dokumenty reprezentované podobnými množinami termů si budou také podobné.
 	
 	Jedním z klíčových ukazatelů podobnosti je počet výskytů TF$_{t,d}$, termu $t$ v dokumentu $d$. Ukazatel TF nicméně nezohledňuje důležitost termů a na všechny nahlíží jako na stejně rovné. Řešením je přidání váhy \textit{inverse document frequency}, definované jako IDF$_t=$log$\frac{N}{df_t}$. Tato přiřazuje vzácnějším termům vyšší váhu a naopak běžným termům vyskytujícím se ve velkém množství dokumentů váhu nižší. Výsledná TF-IDF váha termu $t$ v dokumentu $d$ je definovaná jako tf-idf$_{t,d}=$tf$_{t,d}\times$idf$_t$.  
 	
-	Pro zefektivnění vyhledávání jsou v indexu také uložené předpočítané IDF váhy termů a TF-IDF váhy termů v dokumentech. Původní verze programu tyto počítala během vyhledávání, což vedlo na velmi dlouhou dobu zpracování dotazu při TREC vyhodnocení (jednotky až desítky minut). 
+	Pro zefektivnění vyhledávání jsou v indexu také uložené předpočítané IDF váhy termů, TF-IDF váhy termů v dokumentech a normy TF-IDF vektorů pro jednotlivé dokumenty. Původní verze programu tyto počítala během vyhledávání, což vedlo na velmi dlouhou dobu zpracování dotazu při TREC vyhodnocení (jednotky až desítky minut).
 	
 	\subsection{Vyhledávání v indexu}
 	
@@ -48,34 +60,90 @@
 	
 	\subsubsection{Boolean retrieval}
 
-		- intersection jednotlivých množin pro operátory AND, OR, NOT
+	Metoda vyhledávání pomocí booleovských dotazu je založena na vytvoření stromu dotazu, získání postings seznamů pro jeho listy a následného vypočtení průniku seznamů, podle booleovského operátoru, který je rodičem uzlů. Takto se postupuje od listů stromu až ke kořeni, kde je obsažen finální výsledek v podobě množiny dokumentů odpovídající dotazu.
+	
+	Aby bylo možné efektivně počítat průniky postings seznamů, je nutné aby tyto měly stejné řazení. Typicky se používá řazení podle ID dokumentu, nicméně ID dokumentu je v tomto případě řetězec, proto jsem seznamy seřadil podle zahashovaného ID.
 	
 	\subsubsection{Ranked retrieval}
+	Vyhledávání pomocí podobnosti je založena na interpretaci dotazu jako dokumentu a následném výpočtu podobnosti s ostatními dokumenty. Dotaz je tedy, stejně jako dokumenty, převeden na vektor TF-IDF vah a podobnost mezi ním a dokumentem $d$ je vyjádřena jako kosinus úhlu, který mezi sebou tyto vektory svírají. Tato metoda výpočtu podobnosti se nazývá kosinová podobnost. Funkce kosinus je zvolena, protože pro totožné vektory (svírající úhel 0\degree) vrací 1 a pro naprosto odlišné (úhel 90\degree) vrací 0.
 	
-	 - kosínová podobnost
+	Pro vektory $\vec{q}$ a $\vec{d}$ je kosinus úhlu $\alpha$, který mezi sebou svírají, definováno jako:
 	
-	Optimalizace:
-		 - předpočet IDF pro termy
-		 - předpočet TF-IDF pro Postings
-		 - relativní cos similarity
+	\begin{equation}
+		score_1(\vec{q}, \vec{d}) = cos \alpha = \frac{\vec{q} \cdot \vec{d}}{|\vec{q}| \cdot |\vec{d}|}
+	\end{equation}
+	
+	Možnou optimalizací tohoto výpočtu je použití tzv. relativní kosinové podobnosti. Vektor dotazu $\vec{q}$ je nahrazen vektorem $\vec{Q}$, který se skládá pouze z hodnot 0 a 1 (1 pro každou ne-nulovou složku $\vec{q}$). Tím se skalární součin ve jmenovateli zjednoduší na součet (pro ne-nulové položky $\vec{Q}$) a celý vzoreček má tvar:
+	
+	\begin{equation}
+		score_2(\vec{Q},\vec{d}) = \frac{\vec{Q} \cdot \vec{d}}{|\vec{d}|}
+	\end{equation}
+	
+	Takto získaná hodnota sice již neudává kosinus úhlu mezi vektory, nicméně platí, že:
+	
+	\begin{equation}
+		score_2(\vec{Q}, \vec{d_1}) \ge score_2(\vec{Q}, \vec{d_2}) \Leftrightarrow score_1(\vec{q}, \vec{d_1}) \ge score_1(\vec{q}, \vec{d_2})
+	\end{equation}
+	
+	a proto lze tento zjednodušený vztah použít k výpočtu podobnosti dotazu a dokumentu.
+	
+	Při používání této metody typicky nechceme vrátit skóre každého dokumentu, ale jen $k$ nejrelevantnějších dokumentů. Protože $k$ je typicky výrazně menší než celkový počet dokumentů, není nutné provádět řazení nad všemi výsledky, ale stačí např. prvních 10. K tomu je použita halda do které jsou v průběhu výpočtu ukládány skóre jednotlivých dokumentů a po ukončení výpočtu je vybráno $k$ nejvyšších.
 	
 	\section{Popis implementace}
-	
-	Java aplikace, ne webová
+	Indexer byl implementován jako desktopová aplikace v jazyce Java, skládající se z jádra a grafického uživatelského rozhraní.
 	
 	\subsection{Jádro}
 	
+	pozdější doindexování
+	invertovaný index ve třídě \textit{InvertedIndex}
 	lucene na parsování
 	ukládání do souboru srkze java serializaci
+	počet dokumentů u boolean retrieval
+	indexování ze souboru jenom pro moje data
 	
-	\subsection{Uživatelské rozhraní}
+	\subsection{Uživatelské rozhraní a jeho ovládání}
 	
-	Swing
-	Možnost výběru mezi boolean/ranked retrieval
-	progress bary pro jednotlivé akce (indexování/vyhledání)
-	dokumenty lze indexovat po jednom
-	dokumenty lze indexovat hromadně z json souboru (podporovaný formát viz moje data z prvních cvičení)
+	Uživatelské rozhraní bylo implementováno pomocí frameworku Java Swing. Teto jsem si vybral kvůli jeho jednoduchosti a znalosti z předchozích prací. Celé rozhraní, které je zobrazeno na obrázku \ref{fig:gui-example}, je rozděleno do dvou hlavních částí. Těmi jsou vyhledávací panel (vlevo) a panel pro ovládání indexu (vpravo).
+	
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[width=0.9\linewidth]{gui-ranked}
+		\caption{Ukázka grafického rozhraní aplikace}
+		\label{fig:gui-example}
+	\end{figure}
+
+	\subsubsection{Ovládání indexu}
+	
+	Panel pro ovládání indexu obsahuje kontrolní prvky pro indexování jednotlivých dokumentů, indexování dokumentů ze souboru a pro uložení indexu do souboru a jeho případné načtení.
+	
+	Pro indexování jednotlivých dokumentů je potřeba vyplnit pole Id, Title a Text (všechna jsou povinná) a následně kliknout na tlačítko \textit{Index}. V případě úspěchu se počet indexovaných dokumentů v horní části panelu zvýší o jedna, v opačném případě je zobrazena chybová hláška.
+	
+	Indexování dokumentů ze souboru je určeno pro načítání dat, které jsem získal během prvních cvičeních. Výběr souboru a jeho následné rozparsování a oindexování lze provést kliknutím na tlačítko \textit{Choose the source file}. Protože indexování velkého počtu dokumentů může trvat delší čas, je pod tlačítkem umístěna komponenta pro sledování průběhu indexování. 
+	
+	Index je možné uložit do souboru kliknutím na tlačítko \textit{Save idnex}. Jeho opětovné nahrání je možné kliknutím na tlačítko \textit{Load index}.
+
+	\subsubsection{Vyhledávání}
+
+	Vyhledávací panel se skládá z vyhledávacího formuláře a tabulky pro zobrazení výsledků. Jak již bylo řečeno, vyhledávač umí pracovat ve dvou režimech - ranked a boolean retrieval. Režim vyhledávání lze vybrat komponentou v levé straně vyhledávacího formuláře. Omezení počtu výsledků lze nastavit číselným výběrem. Vyhledávání lze spustit kliknutím na tlačítko \textit{Search}. Podobně jako u indexování, i tato akce může trvat nějakou dobu a proto je ve spodní části vyhledávacího panelu (pod tabulkou s výsledky) umístěn progress bar, kterýám lze sledovat postup vyhledávání.   
+	
+	Příklady zobrazení výsledků v tabulce pro jednotlivé režimy jsou na obrázcích \ref{fig:ranked} a \ref{fig:boolean}. V případě boolean retrieval je hodnota skóre 1, protože dokument buď přesně odpovídá dotazu (1), nebo neodpovídá a není tedy uveden ve výsledcích. Nad tabulkou je umístěn také indikátor počtu vrácených dokumentů.
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\linewidth]{gui-ranked-res}
+		\caption{Výsledky ranked retrieval}
+		\label{fig:ranked}
+	\end{figure}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\linewidth]{gui-boolean-res}
+		\caption{Výsledky boolean retrieval}
+		\label{fig:boolean}
+	\end{figure}
 	
 	\section{Závěr}
+	
+	Práce byla implementována
 	
 \end{document}

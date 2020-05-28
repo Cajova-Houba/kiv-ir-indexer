@@ -95,7 +95,14 @@ public class Main {
      */
     public static void indexDocument(Document document) {
         if (index != null) {
-            index.index(Collections.singletonList(document));
+            index.index(document);
+        }
+    }
+
+    public static void recalculateIndex() {
+        if (index != null){
+            index.getInvertedIndex().recalculateTermIdfs();
+            index.getInvertedIndex().recalculateDocumentTfIdfs();
         }
     }
 

@@ -60,10 +60,14 @@ public class CosineSimilarityWithProgress implements RetrievalWithProgress {
 
         String dId = documentIterator.next();
         double score = similarityCalculator.calculateScore(dId);
-        ResultImpl r = new ResultImpl();
-        r.setDocumentID(dId);
-        r.setScore((float)score);
-        resultQueue.add(r);
+
+        if (Math.abs(score - 0.0) > 0.0001) {
+            ResultImpl r = new ResultImpl();
+            r.setDocumentID(dId);
+            r.setScore((float)score);
+            resultQueue.add(r);
+        }
+
         progress += progressStep;
     }
 

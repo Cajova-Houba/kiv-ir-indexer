@@ -90,6 +90,7 @@ public class IndexManagementPanel extends AbstractGUIPanel {
             @Override
             public void onIndexingFinished() {
                 setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+                Main.recalculateIndex();
                 mainWindow.enableButtons();
             }
         });
