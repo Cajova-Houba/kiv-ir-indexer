@@ -80,6 +80,7 @@ public abstract class IndexSingleDocument extends AbstractAction {
         try {
             log.debug("Indexing document");
             Main.indexDocument(d);
+            Main.recalculateIndex();
             log.debug("Done.");
         } catch (Exception ex) {
             log.error("Unexpected exception while indexing document: ", ex);

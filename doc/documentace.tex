@@ -18,13 +18,11 @@
 	V jazyce Java vytvořte indexer, který bude schopný indexovat zadané dokumenty a následně nad nimi provádět vyhledávání. K realizaci práce použijte připravená rozhraní.
 	
 	\section{Analýza}
-	Aplikace se skládá ze dvou částí. První část tvoří jádro, které indexuje dokumenty a vyhledává na základě dotazu, druhou část tvoří jednoduché grafické rozhraní pro práci s indexerem.
-	
-	Jádro aplikace se skládá z textového preprocesoru, indexu a vyhledávače. Preprocesor je použit k převedení textu (obsah dokumentu nebo vyhledávací dotaz) na tokeny a ty pak do jejich základní formy.
+	Aplikace se skládá ze dvou částí. První část tvoří jádro, které indexuje dokumenty a vyhledává na základě dotazu, druhou část tvoří jednoduché grafické rozhraní pro práci s indexerem. Jádro aplikace se skládá z textového preprocesoru, indexu a vyhledávače.
 	
 	\subsection{Preprocessing}
 	
-	V průběhu pre-processingu textu dojde k jeho rozdělení na tokeny, vyřazení stop-slov a konečně k převodu do základní formy. Před rozdělením na tokeny jsou všechna písmena v textu převedena na malá a text je zbaven diakritiky.
+	V průběhu pre-processingu textu dojde k jeho rozdělení na tokeny, vyřazení stop-slov a konečně k převodu do základní formy. Před rozdělením na tokeny jsou všechna písmena v textu převedena na malá a text je zbaven diakritiky. Součástí tokenizace je také odstranění kontrakcí v anglickém textu, respektive jejich převedení na celá slova. Regulární výrazy použité k detekci kontrakcí na svém GitHubu\footnote{https://gist.github.com/pauli31/3dce15096d87d8f32015ae519b32d418} publikoval uživatel pauli31. 
 	
 	Stop-slova jsou slova, jež typicky patří k nejběžnějším v jazyce, ale samotnému textu nedávají přílišný význam a jejich indexace je tedy zbytečná. Seznam stop-slov je pro každý jazyk jiný a neexistuje jeden univerzální. Protože jsem v průběhu cvičení stahoval anglický text, pre-processor primárně pracuje s anglickými stop- slovy\footnote{https://gist.github.com/sebleier/554280}. Aby bylo možné provést TREC evaluaci, je k dispozici také soubor s českými stop slovy. Algoritmus odstranění stop-slov spočívá v iterování přes text rozdělený na tokeny a v případě, že daný token odpovídá některému ze stop-slov, je z výsledného seznamu tokenů odstraněn.
 	
@@ -94,12 +92,17 @@
 	
 	\subsection{Jádro}
 	
-	pozdější doindexování
+
 	invertovaný index ve třídě \textit{InvertedIndex}
 	lucene na parsování
 	ukládání do souboru srkze java serializaci
 	počet dokumentů u boolean retrieval
 	indexování ze souboru jenom pro moje data
+	
+	nadstandard:
+		- file-based index
+		- GUI
+		- 
 	
 	\subsection{Uživatelské rozhraní a jeho ovládání}
 	

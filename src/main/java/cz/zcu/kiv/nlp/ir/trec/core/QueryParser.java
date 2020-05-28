@@ -131,6 +131,12 @@ public class QueryParser {
      */
     private void createQueryTree(Query luceneQuery, SearchQueryNode root) {
 
+        if (luceneQuery instanceof TermQuery) {
+            root.setTerm(true);
+            root.setText(((TermQuery)luceneQuery).getTerm().text());
+            return;
+        }
+
         BooleanQuery booleanQuery = (BooleanQuery) luceneQuery;
 
         for(BooleanClause clause : booleanQuery.clauses()) {
