@@ -1,14 +1,13 @@
 package cz.zcu.kiv.nlp.ir.trec.core.retrieval;
 
 import cz.zcu.kiv.nlp.ir.trec.Configuration;
-import cz.zcu.kiv.nlp.ir.trec.core.Posting;
 import cz.zcu.kiv.nlp.ir.trec.core.SimilarityCalculator;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.ResultImpl;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 /**
  * Allows to calculate similarity step-by-step so that progress can be tracked.
@@ -18,10 +17,10 @@ import java.util.PriorityQueue;
 public class CosineSimilarityWithProgress implements RetrievalWithProgress {
 
     /**
-     * Postings to process.
+     * Ids of document to go through.
      */
-    private List<Posting> postings;
-    private Iterator<Posting> postingIterator;
+    private Set<String> documentIds;
+    private Iterator<String> documentIterator;
 
     /**
      * Queue to store results into.
@@ -37,17 +36,17 @@ public class CosineSimilarityWithProgress implements RetrievalWithProgress {
     private double progressStep;
 
 
-    public CosineSimilarityWithProgress(List<Posting> postings, PriorityQueue<Result> resultQueue, SimilarityCalculator similarityCalculator) {
-        this.postings = postings;
+    public CosineSimilarityWithProgress(Set<String> documentIds, PriorityQueue<Result> resultQueue, SimilarityCalculator similarityCalculator) {
+        this.documentIds = documentIds;
         this.resultQueue = resultQueue;
         this.similarityCalculator = similarityCalculator;
 
-        postingIterator = postings.iterator();
+        documentIterator = documentIds.iterator();
         progress = 0;
-        if (postings.size() == 0) {
+        if (documentIds.size() == 0) {
             progressStep = 0;
         } else {
-            progressStep = ((double) Configuration.getMaxProgress()) / postings.size();
+            progressStep = ((double) Configuration.getMaxProgress()) / documentIds.size();
         }
     }
 
@@ -59,10 +58,10 @@ public class CosineSimilarityWithProgress implements RetrievalWithProgress {
             return;
         }
 
-        Posting p = postingIterator.next();
-        double score = similarityCalculator.calculateScore(p.getDocumentId());
+        String dId = documentIterator.next();
+        double score = similarityCalculator.calculateScore(dId);
         ResultImpl r = new ResultImpl();
-        r.setDocumentID(p.getDocumentId());
+        r.setDocumentID(dId);
         r.setScore((float)score);
         resultQueue.add(r);
         progress += progressStep;
@@ -73,7 +72,7 @@ public class CosineSimilarityWithProgress implements RetrievalWithProgress {
      * @return
      */
     public boolean done() {
-        return !postingIterator.hasNext();
+        return !documentIterator.hasNext();
     }
 
     /**

@@ -221,13 +221,6 @@ public class Index implements Indexer, Searcher {
     private List<Result> rankedRetrieval(SearchQueryNode queryRoot) {
         log.debug("Getting results for query.");
 
-        // get list of postings to search
-        log.trace("Getting list of postings to search.");
-        List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
-        if(postings.isEmpty()) {
-            return new ArrayList<>();
-        }
-
         // get list of terms in query
         log.trace("Extracting terms from query.");
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
@@ -238,18 +231,21 @@ public class Index implements Indexer, Searcher {
 
         // calculate similarity
         log.trace("Calculating similarity.");
-        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
+        final int docCount = invertedIndex.getDocumentCount();
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(docCount);
         int progressLevel = 0;
         int docProcessed = 0;
-        for(Posting p : postings) {
-            double score = similarityCalculator.calculateScore(p.getDocumentId());
-            ResultImpl r = new ResultImpl();
-            r.setDocumentID(p.getDocumentId());
-            r.setScore((float)score);
-            resultQueue.add(r);
+        for(String documentId : invertedIndex.getIndexedDocuments()) {
+            double score = similarityCalculator.calculateScore(documentId);
+            if (Math.abs(score - 0) > 0.001 ) {
+                ResultImpl r = new ResultImpl();
+                r.setDocumentID(documentId);
+                r.setScore((float) score);
+                resultQueue.add(r);
+            }
 
             docProcessed++;
-            if (100.0*docProcessed / postings.size() > progressLevel) {
+            if (100.0*docProcessed / docCount > progressLevel) {
                 log.debug("{}% of documents processed.", progressLevel);
                 progressLevel += 10;
             }
@@ -278,14 +274,6 @@ public class Index implements Indexer, Searcher {
     private CosineSimilarityWithProgress prepareRankedRetrievalWithProgress(SearchQueryNode queryRoot) {
         log.debug("Preparing search query calculator.");
 
-        // get list of postings to search
-        log.trace("Getting list of postings to search.");
-        List<Posting> postings = invertedIndex.getPostingsForQuery(queryRoot);
-        if(postings.isEmpty()) {
-            log.warn("No postings.");
-            return null;
-        }
-
         // get list of terms in query
         log.trace("Extracting terms from query.");
         String[] terms = queryRoot.getTerms().toArray(new String[0]);
@@ -296,8 +284,8 @@ public class Index implements Indexer, Searcher {
 
         // calculate similarity
         log.trace("Creating similarity progress calculator.");
-        PriorityQueue<Result> resultQueue = prepareTopKQueue(postings.size());
-        return new CosineSimilarityWithProgress(postings, resultQueue, similarityCalculator);
+        PriorityQueue<Result> resultQueue = prepareTopKQueue(invertedIndex.getDocumentCount());
+        return new CosineSimilarityWithProgress(invertedIndex.getIndexedDocuments(), resultQueue, similarityCalculator);
     }
 
     /**
