@@ -7,11 +7,11 @@ public class Configuration {
     }
 
     public static int getMinTopKResults() {
-        return 10;
+        return 1;
     }
 
     public static int getMaxTopKResults() {
-        return 100;
+        return Integer.MAX_VALUE -1;
     }
 
     public static int getMaxProgress() {return 100;}

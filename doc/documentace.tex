@@ -160,7 +160,7 @@
 	
 	\begin{figure}[!h]
 		\centering
-		\includegraphics[width=0.9\linewidth]{gui-ranked}
+		\includegraphics[width=\linewidth]{gui-ranked}
 		\caption{Ukázka grafického rozhraní aplikace}
 		\label{fig:gui-example}
 	\end{figure}
@@ -179,7 +179,7 @@
 
 	Vyhledávací panel se skládá z vyhledávacího formuláře a tabulky pro zobrazení výsledků. Jak již bylo řečeno, vyhledávač umí pracovat ve dvou režimech - ranked a boolean retrieval. Režim vyhledávání lze vybrat komponentou v levé straně vyhledávacího formuláře. Omezení počtu výsledků lze nastavit číselným výběrem. Vyhledávání lze spustit kliknutím na tlačítko \textit{Search}. Podobně jako u indexování, i tato akce může trvat nějakou dobu a proto je ve spodní části vyhledávacího panelu (pod tabulkou s výsledky) umístěn progress bar, kterýám lze sledovat postup vyhledávání.   
 	
-	Příklady zobrazení výsledků v tabulce pro jednotlivé režimy jsou na obrázcích \ref{fig:ranked} a \ref{fig:boolean}. V případě boolean retrieval je hodnota skóre 1, protože dokument buď přesně odpovídá dotazu (1), nebo neodpovídá a není tedy uveden ve výsledcích. Nad tabulkou je umístěn také indikátor počtu vrácených dokumentů.
+	Příklady zobrazení výsledků v tabulce pro jednotlivé režimy jsou na obrázcích \ref{fig:ranked} a \ref{fig:boolean}. V případě boolean retrieval je hodnota skóre 1, protože dokument buď přesně odpovídá dotazu (1), nebo neodpovídá a není tedy uveden ve výsledcích. Nad tabulkou je umístěn také indikátor počtu vrácených dokumentů (top k) a všech nalezených.
 
 	\begin{figure}[h]
 		\centering
@@ -197,6 +197,6 @@
 	
 	\section{Závěr}
 	
-	Práce byla implementována
+	Vyhledávač byl úspěšně naimplementován.
 	
 \end{document}

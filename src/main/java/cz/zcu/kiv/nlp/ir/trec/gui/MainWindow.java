@@ -15,7 +15,7 @@ public class MainWindow extends JFrame {
 
     public MainWindow() {
         setTitle("KIV/IR Indexer");
-        setSize(800,800);
+        setSize(950,800);
         setMinimumSize(new Dimension(800,800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());

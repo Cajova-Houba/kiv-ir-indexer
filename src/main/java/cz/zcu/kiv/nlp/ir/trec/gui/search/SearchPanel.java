@@ -112,6 +112,7 @@ public class SearchPanel extends AbstractGUIPanel {
 
     private void prepareSpinnerModel() {
         topResultsModel = new SpinnerNumberModel(Configuration.getMinTopKResults(), Configuration.getMinTopKResults(), Configuration.getMaxTopKResults(), 1);
+        topResultsModel.setValue(10);
     }
 
     private void updateFoundCount(int documentCount, int totalDocumentCount) {
