@@ -204,6 +204,12 @@
 		\label{fig:html-search}
 	\end{figure}
 	
+	\section{Spuštění aplikace a TREC evaluace}
+	
+	Odevzdávaný archiv obsahuje dva soubory, kterými jsou tato dokumentace a spustitelný JAR archiv. Archiv obsahuje všechny potřebné závislosti. Přeložené soubory se nachází ve složce \verb|cz|, zdrojové kódy (včetně jednotkových testů) pak ve složce \verb|src|.
+	
+	Archiv je možno spustit příkazem \verb|java -jar Indexer.jar|. Při spuštění se v adresáři vytvoří také soubor \verb|kiv-ir-indexer.log| obsahující logy aplikace. TREC evaluaci lze spustit pomocí parametru \verb|-trec|. Celý příkaz je tedy \verb|java -jar Indexer.jar -trec|. V adresáři s JAR souborem nicméně musí být složka \verb|TREC| se zdrojovými daty a složka \verb|trec_eval.8.1| s evaluačním skriptem. Na pomalejším stroji (Intel Pentium 2.30 GHz) by indexování a vyhledávání TREC dat nemělo trvat déle než 8 minut.
+	
 	\section{Závěr}
 	
 	Vyhledávač byl úspěšně naimplementován. Funkcionalita byla otestována jednotkovými a několika manuálními testy. TREC evaluací byl dosažen MAP 0.1378. V rámci práce jsem také zaindexoval data získaná na cvičení a zkusil v nich vyhledávat.

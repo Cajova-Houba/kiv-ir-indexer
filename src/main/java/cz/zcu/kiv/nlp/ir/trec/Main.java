@@ -27,11 +27,19 @@ public class Main {
      */
     public static final String STOP_WORDS_FILE_NAME = "stopwords-english.txt";
 
+    public static final String TREC_EVAL_PARAM = "-trec";
+
     public static Index index;
     private static Logger log = LoggerFactory.getLogger(Main.class);
 
 
     public static void main(String[] args) {
+
+        if (isTrecEval(args)) {
+            TestTrecEval.main(args);
+            return;
+        }
+
         boolean indexStatus = initIndex();
 
         if (!indexStatus) {
@@ -40,6 +48,21 @@ public class Main {
         }
 
         JFrame mainWindow = new MainWindow();
+    }
+
+    /**
+     * Checks if the trec eval parameter is specified.
+     * @param args
+     * @return
+     */
+    private static boolean isTrecEval(String[] args) {
+        for(String arg : args) {
+            if (arg.equals(TREC_EVAL_PARAM)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static boolean initIndex() {
