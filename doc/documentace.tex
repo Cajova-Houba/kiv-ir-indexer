@@ -15,10 +15,10 @@
 	\newpage
 	
 	\section{Zadání}
-	V jazyce Java vytvořte indexer, který bude schopný indexovat zadané dokumenty a následně nad nimi provádět vyhledávání. K realizaci práce použijte připravená rozhraní.
+	V jazyce Java vytvořte apliakce, která bude schopný indexovat zadané dokumenty a následně nad nimi provádět vyhledávání. K realizaci práce použijte připravená rozhraní.
 	
 	\section{Analýza}
-	Aplikace se skládá ze dvou částí. První část tvoří jádro, které indexuje dokumenty a vyhledává na základě dotazu, druhou část tvoří jednoduché grafické rozhraní pro práci s indexerem. Jádro aplikace se skládá z textového preprocesoru, indexu a vyhledávače.
+	Aplikace se skládá ze dvou částí. První část tvoří jádro, které indexuje dokumenty a vyhledává na základě dotazu, druhou část tvoří jednoduché grafické rozhraní pro práci s indexerem. Jádro aplikace se skládá z textového preprocesoru, indexu a vyhledávače, které jsou detailně popsány v následujících sekcích.
 	
 	\subsection{Preprocessing}
 	
@@ -48,7 +48,7 @@
 	\subsubsection{TF-IDF váhy}
 	Na dokument je, v rámci, indexu nahlíženo jako na množinu výskytů termů a konkrétní pozice termu v dokumentu není zohledněna. Tento přístup se nazývá \textit{bag of words model} a je založen na předpokladu, že dva dokumenty reprezentované podobnými množinami termů si budou také podobné.
 	
-	Jedním z klíčových ukazatelů podobnosti je počet výskytů TF$_{t,d}$, termu $t$ v dokumentu $d$. Ukazatel TF nicméně nezohledňuje důležitost termů a na všechny nahlíží jako na stejně rovné. Řešením je přidání váhy \textit{inverse document frequency}, definované jako IDF$_t=$log$\frac{N}{df_t}$. Tato přiřazuje vzácnějším termům vyšší váhu a naopak běžným termům vyskytujícím se ve velkém množství dokumentů váhu nižší. Výsledná TF-IDF váha termu $t$ v dokumentu $d$ je definovaná jako tf-idf$_{t,d}=$tf$_{t,d}\times$idf$_t$.  
+	Jedním z klíčových ukazatelů podobnosti je počet výskytů TF$_{t,d}$, termu $t$ v dokumentu $d$. Typicky se používá jeho logaritmovaná verze, tedy tf$_{t,d}=1+log_{10}($TF$_{t,d})$. Ukazatel TF nicméně nezohledňuje důležitost termů a na všechny nahlíží jako na stejně rovné. Řešením je přidání váhy \textit{inverse document frequency}, definované jako IDF$_t=$log$\frac{N}{df_t}$. Tato přiřazuje vzácnějším termům vyšší váhu a naopak běžným termům vyskytujícím se ve velkém množství dokumentů váhu nižší. Výsledná TF-IDF váha termu $t$ v dokumentu $d$ je definovaná jako tf-idf$_{t,d}=$tf$_{t,d}\times$idf$_t$.  
 	
 	Pro zefektivnění vyhledávání jsou v indexu také uložené předpočítané IDF váhy termů, TF-IDF váhy termů v dokumentech a normy TF-IDF vektorů pro jednotlivé dokumenty. Původní verze programu tyto počítala během vyhledávání, což vedlo na velmi dlouhou dobu zpracování dotazu při TREC vyhodnocení (jednotky až desítky minut).
 	
@@ -63,7 +63,7 @@
 	Aby bylo možné efektivně počítat průniky postings seznamů, je nutné aby tyto měly stejné řazení. Typicky se používá řazení podle ID dokumentu, nicméně ID dokumentu je v tomto případě řetězec, proto jsem seznamy seřadil podle zahashovaného ID.
 	
 	\subsubsection{Ranked retrieval}
-	Vyhledávání pomocí podobnosti je založena na interpretaci dotazu jako dokumentu a následném výpočtu podobnosti s ostatními dokumenty. Dotaz je tedy, stejně jako dokumenty, převeden na vektor TF-IDF vah a podobnost mezi ním a dokumentem $d$ je vyjádřena jako kosinus úhlu, který mezi sebou tyto vektory svírají. Tato metoda výpočtu podobnosti se nazývá kosinová podobnost. Funkce kosinus je zvolena, protože pro totožné vektory (svírající úhel 0\degree) vrací 1 a pro naprosto odlišné (úhel 90\degree) vrací 0.
+	Vyhledávání pomocí podobnosti je založena na interpretaci dotazu jako dokumentu a následném výpočtu podobnosti s ostatními dokumenty. Dotaz je tedy, stejně jako dokumenty, převeden na vektor TF-IDF vah a podobnost mezi ním a dokumentem $d$ je vyjádřena jako kosinus úhlu, který mezi sebou tyto vektory svírají. Tato metoda výpočtu podobnosti se nazývá kosinová podobnost. Funkce kosinus je zvolena protože pro totožné vektory (svírající úhel 0\degree) vrací 1 a pro naprosto odlišné (úhel 90\degree) vrací 0.
 	
 	Pro vektory $\vec{q}$ a $\vec{d}$ je kosinus úhlu $\alpha$, který mezi sebou svírají, definováno jako:
 	
@@ -206,7 +206,7 @@
 	
 	\section{Spuštění aplikace a TREC evaluace}
 	
-	Odevzdávaný archiv obsahuje dva soubory, kterými jsou tato dokumentace a spustitelný JAR archiv. Archiv obsahuje všechny potřebné závislosti. Přeložené soubory se nachází ve složce \verb|cz|, zdrojové kódy (včetně jednotkových testů) pak ve složce \verb|src|.
+	Odevzdávaný archiv obsahuje jednu složku a dva soubory, kterými jsou tato dokumentace a spustitelný JAR archiv. Archiv obsahuje všechny potřebné závislosti, včetně přeložených souborů, jež se nachází ve složce \verb|cz|. Zdrojové kódy a soubor \verb|pom.xml| se nachází ve složce \verb|src|.
 	
 	Archiv je možno spustit příkazem \verb|java -jar Indexer.jar|. Při spuštění se v adresáři vytvoří také soubor \verb|kiv-ir-indexer.log| obsahující logy aplikace. TREC evaluaci lze spustit pomocí parametru \verb|-trec|. Celý příkaz je tedy \verb|java -jar Indexer.jar -trec|. V adresáři s JAR souborem nicméně musí být složka \verb|TREC| se zdrojovými daty a složka \verb|trec_eval.8.1| s evaluačním skriptem. Na pomalejším stroji (Intel Pentium 2.30 GHz) by indexování a vyhledávání TREC dat nemělo trvat déle než 8 minut.
 	
