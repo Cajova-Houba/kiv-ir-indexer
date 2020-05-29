@@ -143,7 +143,7 @@
 		\label{fig:search-uml}
 	\end{figure} 
 	
-	Aplikace podporuje dva režimy vyhledávání (boolean a ranked). Tyto jsou reprezentovány enumem \verb|SearchMode|, jež slouží k výběru parsovací metody a také k výběru vyhledání dokumentů. Zpracování dotazů (pro oba režimy) je implementováno ve třídě \verb|QueryParser|. Vnitřně je k parsování použita knihovna Lucene. Třída \verb|SearchQueryNode| je rekurzivním objektem použitým k reprezentaci booleovských dotazů stromem. 
+	Aplikace podporuje dva režimy vyhledávání (boolean a ranked). Tyto jsou reprezentovány enumem \verb|SearchMode|, jež slouží k výběru parsovací metody a také k výběru vyhledání dokumentů. Zpracování dotazů (pro oba režimy) je implementováno ve třídě \verb|QueryParser|. Vnitřně je k parsování použita knihovna Lucene. Třída \verb|SearchQueryNode| je rekurzivním objektem použitým k reprezentaci booleovských dotazů stromem. V případě boolean query jsou akceptovány pouze operátory (velkým písmem) \verb|AND|, \verb|OR|, \verb|NOT| a závorky.
 	
 	\begin{figure}[!h]
 		\centering
@@ -195,8 +195,19 @@
 		\label{fig:boolean}
 	\end{figure}
 	
+	Protože předzpracování textu je schopno detekovat HTML tagy, je možné podle nich i vyhledávat. To je znázorněno na obrázku \ref{fig:html-search}. Pro tento příklad byl zaindexován zdrojový kód jednoduché HTML stránky obsahující pouze titulek a text. Tento dokument byl následně vrácen vyhledávačem na dotaz obsahující pouze HTML značky.
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\linewidth]{gui-html-search}
+		\caption{Vyhledávání podle HTML tagů}
+		\label{fig:html-search}
+	\end{figure}
+	
 	\section{Závěr}
 	
-	Vyhledávač byl úspěšně naimplementován.
+	Vyhledávač byl úspěšně naimplementován. Funkcionalita byla otestována jednotkovými a několika manuálními testy. TREC evaluací byl dosažen MAP 0.1378. V rámci práce jsem také zaindexoval data získaná na cvičení a zkusil v nich vyhledávat.
+	
+	Případná vylepšení by mohla zahrnovat ukládání indexu do standardizovaného formátu (například JSON), čímž, by se odstranila závislost na implementaci. Dále by se také mohlo doimplementovat více modelů podobnosti. Protože komentáře příspěvků ze stránky Reddit, která jsem indexoval, obsahují vlastní skóre, bylo by dobré rozšířit možnosti vyhledávání o pole dokumentů, čímž by bylo umožněno vyhledávat komentáře obsahující určité výrazy a filtrovat je dosaženým skóre Dotaz by pak mohl mít podobu například: \verb|text:"Trump and Russia" score:">30"|.
 	
 \end{document}
