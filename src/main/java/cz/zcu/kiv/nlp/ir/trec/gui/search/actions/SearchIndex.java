@@ -31,7 +31,7 @@ public abstract class SearchIndex extends AbstractAction {
 
     public abstract void onError(String message);
 
-    public abstract void onSearchFinished(List<Result> results);
+    public abstract void onSearchFinished(List<Result> results, int totalDocumentCount);
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -52,7 +52,7 @@ public abstract class SearchIndex extends AbstractAction {
                 @Override
                 protected void done() {
                     try {
-                        onSearchFinished(get());
+                        onSearchFinished(get(), getTotalDocumentCount());
                     } catch (Exception e1) {
                         log.error("Unexpected exception: ", e1);
                         e1.printStackTrace();

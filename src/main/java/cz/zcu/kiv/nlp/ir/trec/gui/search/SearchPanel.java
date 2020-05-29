@@ -91,8 +91,8 @@ public class SearchPanel extends AbstractGUIPanel {
             }
 
             @Override
-            public void onSearchFinished(List<Result> results) {
-                updateFoundCount(results.size());
+            public void onSearchFinished(List<Result> results, int totalDocumentCount) {
+                updateFoundCount(results.size(), totalDocumentCount);
                 resultModel.clearResults();
                 resultModel.addResults(results);
                 mainWindow.enableButtons();
@@ -114,8 +114,8 @@ public class SearchPanel extends AbstractGUIPanel {
         topResultsModel = new SpinnerNumberModel(Configuration.getMinTopKResults(), Configuration.getMinTopKResults(), Configuration.getMaxTopKResults(), 1);
     }
 
-    private void updateFoundCount(int size) {
-        foundDocumentsCount.setText(FOUND_DOC_LABEL + "("+size+")");
+    private void updateFoundCount(int documentCount, int totalDocumentCount) {
+        foundDocumentsCount.setText(String.format("%s (%d/%d)", FOUND_DOC_LABEL, documentCount, totalDocumentCount));
     }
 
     /**

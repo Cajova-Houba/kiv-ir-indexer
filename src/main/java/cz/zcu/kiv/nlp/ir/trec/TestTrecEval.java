@@ -92,13 +92,15 @@ public class TestTrecEval {
 
         int cnt = 1;
         for (Topic t : topics) {
-            //TODO vytvoření dotazu, třída Topic představuje dotaz pro vyhledávání v zaindexovaných dokumentech
+            //vytvoření dotazu, třída Topic představuje dotaz pro vyhledávání v zaindexovaných dokumentech
             //a obsahuje tři textová pole title, description a narrative. To jak sestavíte dotaz je na Vás a pravděpodobně
             //to ovlivní výsledné vyhledávání - zkuste změnit a uvidíte jaký MAP (Mean Average Precision) dostanete pro jednotlivé
             //kombinace např. pokud budete vyhledávat jen pomocí title (t.getTitle()) nebo jen pomocí description (t.getDescription())
             //nebo jejich kombinací (t.getTitle() + " " + t.getDescription())
+            // combinations tried: title + desc, desc + narr, narr
+            // the best MAP was for desc + narr
             log.debug(cnt+"/"+topics.size());
-            List<Result> resultHits = index.search(t.getTitle() + " " + t.getDescription());
+            List<Result> resultHits = index.search(t.getDescription() + " " +t.getNarrative());
 
             Comparator<Result> cmp = (o1, o2) -> {
                 if (o1.getScore() > o2.getScore()) return -1;

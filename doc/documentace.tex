@@ -88,21 +88,71 @@
 	Při používání této metody typicky nechceme vrátit skóre každého dokumentu, ale jen $k$ nejrelevantnějších dokumentů. Protože $k$ je typicky výrazně menší než celkový počet dokumentů, není nutné provádět řazení nad všemi výsledky, ale stačí např. prvních 10. K tomu je použita halda do které jsou v průběhu výpočtu ukládány skóre jednotlivých dokumentů a po ukončení výpočtu je vybráno $k$ nejvyšších.
 	
 	\section{Popis implementace}
-	Indexer byl implementován jako desktopová aplikace v jazyce Java, skládající se z jádra a grafického uživatelského rozhraní.
+	Indexer byl implementován jako desktopová aplikace v jazyce Java, skládající se z jádra a grafického uživatelského rozhraní. Jádro aplikace je rozděleno mezi balíky \verb|core|, \verb|data| a \verb|preprocess|. K implementaci byla využita rozhraní ze zadání. 
 	
-	\subsection{Jádro}
+	\subsection{Preprocessing}
+	Logika předzpracování textu je obsažena ve třídě \verb|Preprocessor|. Tato třída tokenizuje a stemuje text pomocí dodaných tříd implementující rozhraní \verb|Tokenizer| a \verb|Stemmer|, tak jak je znázorněno na obrázku \ref{fig:preproc-uml}. Tím je zajištěna pohodlná rozšiřitelnost předzpracování.
 	
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[height=8cm]{preproc-uml}
+		\caption{Třídy zajišťující předzpracování textu}
+		\label{fig:preproc-uml}
+	\end{figure}
 
-	invertovaný index ve třídě \textit{InvertedIndex}
-	lucene na parsování
-	ukládání do souboru srkze java serializaci
-	počet dokumentů u boolean retrieval
-	indexování ze souboru jenom pro moje data
+	Tokenizaci textu zajišťuje třída \verb|AdvancedTokenizer|, která vychází převázně z prací na cvičeních. Tokenizace textu je řešena následujícími regulárními výrazy:
 	
-	nadstandard:
-		- file-based index
-		- GUI
-		- html tagy(?) regex ((http[s]?://[\\p{L}\d:/.?=\&+*-\_]+)|(\\p{L}[\\p{L}\d:/?=\&+*'-]+)|(\d[\d*x.]+)|(<.*?>)|([\\p{Punct}])
+	\begin{itemize}
+		\item \verb|(http[s]?://[\\p{L}\d:/.?=\&+*-\_]+)| - detekce HTTP odkazů
+		\item \verb|(\\p{L}[\\p{L}\d:/?=\&+*'-]+)| - detekce slov obsahující písmena, čísla a znaky
+		\item \verb|(\d[\d*x.]+)| - detekce čísel a číselných výrazů
+		\item \verb|<.*?>)| - detekce HTML tagů
+		\item \verb|([\p{Punct}])| - detekce interpunkce
+	\end{itemize}
+	
+	Tyto jsou spojeny operátorem $|$ do jednoho regulárního výrazu, kterým je text tokenizován.
+	
+	Stemování českého textu zajišťuje třída \verb|CzechStemmerAgressive| vytvořená během cvičení. Stematizátor anglického textu \verb|EnglishStemmer|, jež implementuje Porterův algoritmus, byl převzat z GitHub\footnote{https://github.com/stanfordnlp/CoreNLP/blob/master/src/edu/stanford/nlp/process/Stemmer.java} repozitáře CoreNLP.
+	
+	
+	\subsection{Indexování}
+	
+	Třídy použité k indexování dokumentů jsou znázorněny na diagramu \ref{fig:index-uml}, zeleně označené jsou třídy dodané se zadáním. Samotná data jsou držena ve třídě \verb|InvertedIndex|, která reprezentuje invertovaný index. Kromě indexovaných dokumentů jsou zde uloženy také ID všech indexovaných dokumentů, předpočítané IDF hodnoty termů a normy TF-IDF vektorů dokumentů. 	Většina dat je ukládána do hashovacích map z důvodu snadného čtení.  
+	
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[height=6cm]{index-uml}
+		\caption{Třídy zajišťující indexování dokumentů}
+		\label{fig:index-uml}
+	\end{figure} 
+
+	Ve třídě \verb|InvertedIndex| se také nachází metody pro přepočítání TF-IDF vah termů, jež by měly být volané po indexování (aby byl index konzistentní). Atribut \verb|invertedIndex| obsahuje vnořenou \verb|Map|, jež umožňuje v seznamu postings vyhledávat pomocí dokument ID a není tedy nutné procházet celý seznam. 
+	
+	Aplikace podporuje ukládání indexu do soboru. V takovém případě je instance \verb|InvertedIndex| serializována a uložena do zadaného souboru. Nevýhodou tohoto přístupu je závislost na implementaci a pokud ve třídě \verb|InvertedIndex|  dojde ke změně, staré soubory s indexem již nejsou kompatibilní.
+	
+	Dokumenty do indexu lze také načíst ze souboru, nicméně protože je tato funkcionalita určena pro data, která jsem sebral crawlováním stránky Reddit během cvičení, je popdporován pouze specifický formát JSON. Soubor musí obsahovat pole JSON objektů, jež mají atributy \verb|username|, \verb|timestamp|, \verb|score| a \verb|text|. Parsování JSON souborů je implementováno ve třídě \verb|RPolDocumentReader|.
+	
+	\subsection{Vyhledávání}
+	
+	Vyhledávání nad indexem je prováděno skrze dodané rozhraní \verb|Searcher|. Diagram \ref{fig:search-uml} popisuje strukturu tříd, zajišťujících rozparsování dotazu a následné vyhledání relevantních dokumentů.
+	
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[width=\linewidth]{search-uml}
+		\caption{Třídy zajišťující vyhledání dokumentů v indexu}
+		\label{fig:search-uml}
+	\end{figure} 
+	
+	Aplikace podporuje dva režimy vyhledávání (boolean a ranked). Tyto jsou reprezentovány enumem \verb|SearchMode|, jež slouží k výběru parsovací metody a také k výběru vyhledání dokumentů. Zpracování dotazů (pro oba režimy) je implementováno ve třídě \verb|QueryParser|. Vnitřně je k parsování použita knihovna Lucene. Třída \verb|SearchQueryNode| je rekurzivním objektem použitým k reprezentaci booleovských dotazů stromem. 
+	
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[width=\linewidth]{cosine-uml}
+		\caption{Třídy pro počítání ranked retrieval}
+		\label{fig:cosine-uml}
+	\end{figure} 
+	
+	V případě vyhledávacího režimu ranked je k výpočtu skóre použita metoda kosinové podobnosti. Diagram \ref{fig:cosine-uml} obsahuje rozhraní \verb|SimilarityCalculator|, protože původní záminka byla implementovat více modelů podobnosti. Nicméně z časových důvodů bylo od tohoto upuštěno a jedinou implementací je tedy třída \verb|ConsineSimilarityCalculator|, jež využívá model kosinové podobnosti. 
 	
 	\subsection{Uživatelské rozhraní a jeho ovládání}
 	

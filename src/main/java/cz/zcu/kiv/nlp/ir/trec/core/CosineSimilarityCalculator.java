@@ -70,29 +70,4 @@ public class CosineSimilarityCalculator implements SimilarityCalculator {
             vec.put(key, vec.get(key) / sqrSum);
         }
     }
-
-    public int df(String term) {
-        return invertedIndex.documentFrequency(term);
-    }
-
-    public double idf(String term) {
-        return invertedIndex.idf(term);
-    }
-
-    public double ntf(String term, String documentId) {
-        return invertedIndex.getTermFrequency(term, documentId);
-    }
-
-    public double ltf(String term, String documentId){
-        double ltf = ntf(term, documentId);
-        if (ltf != 0) {
-            ltf = 1 + Math.log10(ltf);
-        }
-
-        return ltf;
-    }
-
-    public int getDocumentCount() {
-        return invertedIndex.getDocumentCount();
-    }
 }

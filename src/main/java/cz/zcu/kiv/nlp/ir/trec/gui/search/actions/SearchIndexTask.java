@@ -18,12 +18,14 @@ public class SearchIndexTask extends SwingWorker<List, Integer> {
     private int topK;
     private JProgressBar progressBar;
     private SearchMode searchMode;
+    private int totalDocumentCount;
 
     public SearchIndexTask(String query, int topK, SearchMode searchMode, JProgressBar progressBar) {
         this.query = query;
         this.topK = topK;
         this.progressBar = progressBar;
         this.searchMode = searchMode;
+        this.totalDocumentCount = 0;
     }
 
     @Override
@@ -47,6 +49,15 @@ public class SearchIndexTask extends SwingWorker<List, Integer> {
 
         publish(Configuration.getMaxProgress());
 
+        totalDocumentCount = retrievalWithProgress.getResultQueue().size();
         return Main.extractTopKResults(retrievalWithProgress.getResultQueue(), topK);
+    }
+
+    /**
+     * Returns total number of found documents.
+     * @return
+     */
+    public int getTotalDocumentCount() {
+        return totalDocumentCount;
     }
 }

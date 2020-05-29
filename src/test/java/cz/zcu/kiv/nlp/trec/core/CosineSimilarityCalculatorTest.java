@@ -41,51 +41,6 @@ public class CosineSimilarityCalculatorTest {
         similarityCalculator = new CosineSimilarityCalculator(invertedIndex, tokenizedQuery);
     }
 
-    @Test
-    public void testNtf() {
-        // expected natural tf for each query token in document d1
-        double[] expectedNtf = new double[] {0, 1, 2};
-        String documentId = "d1";
-
-        int i = 0;
-        for(String term : tokenizedQuery) {
-            double ntf = similarityCalculator.ntf(term, documentId);
-            assertEquals("Wrong ntf for term: "+term, expectedNtf[i], ntf, 0.01);
-            i++;
-        }
-    }
-
-    @Test
-    public void testLtf() {
-        // expected ltf for each query token in document d1
-        double[] expectedLtf = new double[] {
-                0,
-                1 + Math.log10(1),
-                1 + Math.log10(2)
-        };
-        String documentId = "d1";
-
-        int i = 0;
-        for(String term : tokenizedQuery) {
-            double ltf = similarityCalculator.ltf(term, documentId);
-            assertEquals("Wrong ltf for term: "+term, expectedLtf[i], ltf, 0.01);
-            i++;
-        }
-    }
-
-    @Test
-    public void testDf() {
-        // expected document frequencies for terms in query
-        double[] expectedDf = new double[] {0, 2, 2};
-
-        int i = 0;
-        for(String term : tokenizedQuery) {
-            double df = similarityCalculator.df(term);
-            assertEquals("Wrong df for term: "+term, expectedDf[i], df, 0.01);
-            i++;
-        }
-    }
-
     /**
      * Calculate relative cosine similarity between D1 and query.
      */
