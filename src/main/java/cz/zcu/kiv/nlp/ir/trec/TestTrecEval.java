@@ -4,7 +4,7 @@ import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.data.Topic;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
-import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerAgressive;
+import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerLight;
 import org.apache.log4j.*;
 
 import java.io.*;
@@ -60,7 +60,7 @@ public class TestTrecEval {
 
         Index index = new Index(
                 new AdvancedTokenizer(),
-                new CzechStemmerAgressive(),
+                new CzechStemmerLight(),
                 loadStopwords(STOPWORDS_CZ_1));
         index.setTopResultCount(-1);
 

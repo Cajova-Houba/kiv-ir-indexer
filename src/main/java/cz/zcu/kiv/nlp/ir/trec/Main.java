@@ -7,6 +7,7 @@ import cz.zcu.kiv.nlp.ir.trec.data.Document;
 import cz.zcu.kiv.nlp.ir.trec.data.Result;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.AdvancedTokenizer;
+import cz.zcu.kiv.nlp.ir.trec.preprocess.CzechStemmerLight;
 import cz.zcu.kiv.nlp.ir.trec.preprocess.EnglishStemmer;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.slf4j.Logger;
@@ -21,13 +22,19 @@ import java.util.*;
  */
 public class Main {
 
+    /**
+     * Either use CZ preproc and expect CZ data or use EN preproc and expect CZ data.
+     */
+    public static boolean USE_CZ = true;
 
     /**
      * Name of the stopwords file in resource directory.
      */
     public static final String STOP_WORDS_FILE_NAME = "stopwords-english.txt";
+    private static final String STOPWORDS_CZ_1 = "stopwords-czech-1.txt";
 
-    public static final String TREC_EVAL_PARAM = "-trec";
+    public static final String TREC_EVAL_PARAM = "-cz";
+    public static final String LANG_PARAM = "-trec";
 
     public static Index index;
     private static Logger log = LoggerFactory.getLogger(Main.class);
@@ -40,6 +47,8 @@ public class Main {
             return;
         }
 
+        checkLanguageMode(args);
+
         boolean indexStatus = initIndex();
 
         if (!indexStatus) {
@@ -48,6 +57,59 @@ public class Main {
         }
 
         JFrame mainWindow = new MainWindow();
+    }
+
+    /**
+     * Whether to use czech preprocessing and expect czech data file.
+     *
+     * @return
+     */
+    public static boolean useCz() {
+        return USE_CZ;
+    }
+
+    /**
+     * Checks if -cz arg is present and sets USE_CZ var accordingly.
+     * @param args
+     */
+    private static void checkLanguageMode(String[] args) {
+        USE_CZ = false;
+        for(String arg : args) {
+            if (LANG_PARAM.equals(arg)) {
+                USE_CZ = true;
+                break;
+            }
+        }
+    }
+
+    private static boolean initIndex() {
+        if (useCz()) {
+            return initIndexCz();
+        } else {
+            return initIndexEn();
+        }
+    }
+
+    private static boolean initIndexCz() {
+        log.info("");
+        log.info("=====================");
+        log.info("Initializing index.");
+        log.info("=====================");
+        log.info("");
+        log.info("Loading stopwrods.");
+        Set<String> stopwords;
+        try {
+            stopwords = new HashSet<>(IOUtils.readLines(ClassLoader.getSystemResourceAsStream(STOPWORDS_CZ_1)));
+        } catch (Exception ex) {
+            log.error("Error while loading stopwords from resource file "+STOPWORDS_CZ_1+": "+ex.getMessage());
+            return false;
+        }
+        log.info("Done");
+
+        index = new Index(new AdvancedTokenizer(), new CzechStemmerLight(), stopwords);
+        log.info("Index initialized");
+
+        return true;
     }
 
     /**
@@ -65,7 +127,7 @@ public class Main {
         return false;
     }
 
-    private static boolean initIndex() {
+    private static boolean initIndexEn() {
         log.info("");
         log.info("=====================");
         log.info("Initializing index.");

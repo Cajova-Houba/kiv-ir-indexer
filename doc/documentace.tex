@@ -112,7 +112,7 @@
 	
 	Tyto jsou spojeny operátorem $|$ do jednoho regulárního výrazu, kterým je text tokenizován.
 	
-	Stemování českého textu zajišťuje třída \verb|CzechStemmerAgressive| vytvořená během cvičení. Stematizátor anglického textu \verb|EnglishStemmer|, jež implementuje Porterův algoritmus, byl převzat z GitHub\footnote{https://github.com/stanfordnlp/CoreNLP/blob/master/src/edu/stanford/nlp/process/Stemmer.java} repozitáře CoreNLP.
+	Stemování českého textu zajišťuje třída \verb|CzechStemmerLight| vytvořená během cvičení. Stematizátor anglického textu \verb|EnglishStemmer|, jež implementuje Porterův algoritmus, byl převzat z GitHub\footnote{https://github.com/stanfordnlp/CoreNLP/blob/master/src/edu/stanford/nlp/process/Stemmer.java} repozitáře CoreNLP.
 	
 	
 	\subsection{Indexování}
@@ -210,9 +210,11 @@
 	
 	Archiv je možno spustit příkazem \verb|java -jar Indexer.jar|. Při spuštění se v adresáři vytvoří také soubor \verb|kiv-ir-indexer.log| obsahující logy aplikace. TREC evaluaci lze spustit pomocí parametru \verb|-trec|. Celý příkaz je tedy \verb|java -jar Indexer.jar -trec|. V adresáři s JAR souborem nicméně musí být složka \verb|TREC| se zdrojovými daty a složka \verb|trec_eval.8.1| s evaluačním skriptem. Na pomalejším stroji (Intel Pentium 2.30 GHz) by indexování a vyhledávání TREC dat nemělo trvat déle než 8 minut.
 	
+	Program lze také spustit s parametrem \verb|-cz|, tedy \verb|java -jar Indexer.jar -cz|, což umožní indexovat školní (česká) data.
+	
 	\section{Závěr}
 	
-	Vyhledávač byl úspěšně naimplementován. Funkcionalita byla otestována jednotkovými a několika manuálními testy. TREC evaluací byl dosažen MAP 0.1378. V rámci práce jsem také zaindexoval data získaná na cvičení a zkusil v nich vyhledávat.
+	Vyhledávač byl úspěšně naimplementován. Funkcionalita byla otestována jednotkovými a několika manuálními testy. TREC evaluací byl dosažen MAP 0.1461. V rámci práce jsem také zaindexoval data získaná na cvičení a zkusil v nich vyhledávat.
 	
 	Případná vylepšení by mohla zahrnovat ukládání indexu do standardizovaného formátu (například JSON), čímž, by se odstranila závislost na implementaci. Dále by se také mohlo doimplementovat více modelů podobnosti. Protože komentáře příspěvků ze stránky Reddit, která jsem indexoval, obsahují vlastní skóre, bylo by dobré rozšířit možnosti vyhledávání o pole dokumentů, čímž by bylo umožněno vyhledávat komentáře obsahující určité výrazy a filtrovat je dosaženým skóre Dotaz by pak mohl mít podobu například: \verb|text:"Trump and Russia" score:">30"|.
 	

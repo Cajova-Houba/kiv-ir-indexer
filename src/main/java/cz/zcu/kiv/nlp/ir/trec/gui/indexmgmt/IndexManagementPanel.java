@@ -4,6 +4,7 @@ import cz.zcu.kiv.nlp.ir.trec.Configuration;
 import cz.zcu.kiv.nlp.ir.trec.Main;
 import cz.zcu.kiv.nlp.ir.trec.gui.AbstractGUIPanel;
 import cz.zcu.kiv.nlp.ir.trec.gui.MainWindow;
+import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexCzDataFromFile;
 import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexDocumentsFromFile;
 import cz.zcu.kiv.nlp.ir.trec.gui.indexmgmt.actions.IndexSingleDocument;
 import org.slf4j.Logger;
@@ -75,25 +76,47 @@ public class IndexManagementPanel extends AbstractGUIPanel {
         panel.setMaximumSize(new Dimension(300,100));
         panel.setBorder(BorderFactory.createTitledBorder("Index documents from file"));
 
-        indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file", getParent(), indexFromDocProgressBar) {
-            @Override
-            public void onBeforeIndex() {
-                mainWindow.disableButtons();
-            }
+        if (Main.useCz()) {
+            indexDocumentsFromFile = new JButton(new IndexCzDataFromFile("Choose the source file", getParent(), indexFromDocProgressBar) {
+                @Override
+                public void onBeforeIndex() {
+                    mainWindow.disableButtons();
+                }
 
-            @Override
-            public void onError(String error) {
-                showErrorMessage(error);
-                mainWindow.enableButtons();
-            }
+                @Override
+                public void onError(String error) {
+                    showErrorMessage(error);
+                    mainWindow.enableButtons();
+                }
 
-            @Override
-            public void onIndexingFinished() {
-                setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
-                Main.recalculateIndex();
-                mainWindow.enableButtons();
-            }
-        });
+                @Override
+                public void onIndexingFinished() {
+                    setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+                    Main.recalculateIndex();
+                    mainWindow.enableButtons();
+                }
+            });
+        } else {
+            indexDocumentsFromFile = new JButton(new IndexDocumentsFromFile("Choose the source file", getParent(), indexFromDocProgressBar) {
+                @Override
+                public void onBeforeIndex() {
+                    mainWindow.disableButtons();
+                }
+
+                @Override
+                public void onError(String error) {
+                    showErrorMessage(error);
+                    mainWindow.enableButtons();
+                }
+
+                @Override
+                public void onIndexingFinished() {
+                    setIndexedDocumentsCount(Main.getIndex().getDocumentCount());
+                    Main.recalculateIndex();
+                    mainWindow.enableButtons();
+                }
+            });
+        }
         panel.add(indexDocumentsFromFile);
         panel.add(indexFromDocProgressBar);
 
